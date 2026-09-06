@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Smriti-Setu Memory Match</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+            max-width: 750px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .header .subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            margin-top: 4px;
+            letter-spacing: 2px;
+        }
+
+        #ai-decision {
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            color: #ffd700;
+            padding: 12px 18px;
+            border-radius: 16px;
+            text-align: center;
+            font-size: 1.05rem;
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.05);
+        }
+
+        #ai-decision strong {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 10px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stats span {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .stats strong {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1;
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.4rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            user-select: none;
+            min-width: 60px;
+            min-height: 60px;
+        }
+
+        .card.flipped {
+            background: linear-gradient(145deg, #edf2f7, #e2e8f0);
+            transform: scale(1.02);
+            border-color: #63b3ed;
+            box-shadow: 0 0 25px rgba(99, 179, 237, 0.25);
+        }
+
+        .card.matched {
+            background: linear-gradient(145deg, #38a169, #2f855a);
+            border-color: #48bb78;
+            transform: scale(0.92);
+            cursor: default;
+            box-shadow: 0 0 30px rgba(72, 187, 120, 0.2);
+        }
+
+        .card:not(.flipped):not(.matched):hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.1);
+        }
+
+        #result-message {
+            text-align: center;
+            font-size: 1.15rem;
+            font-weight: 600;
+            min-height: 2.4rem;
+            padding: 8px 0;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .controls button {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #1a202c;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 20px rgba(247, 151, 30, 0.25);
+            letter-spacing: 0.5px;
+        }
+
+        .controls button:hover {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(247, 151, 30, 0.4);
+        }
+
+        .controls button:active {
+            transform: scale(0.96);
+        }
+
+        .controls .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            box-shadow: none;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .controls .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 500px) {
+            .container { padding: 20px; }
+            .header h1 { font-size: 1.5rem; }
+            .stats span { font-size: 0.85rem; }
+            .card { font-size: 1.8rem; min-width: 50px; min-height: 50px; }
+            .controls button { padding: 12px 22px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🧠 Smriti-Setu</h1>
+        <div class="subtitle">✨ Memory Match • Cognitive Training</div>
+    </div>
+
+    <div id="ai-decision">
+        🧠 AI is analyzing your brain power...
+    </div>
+
+    <div class="stats">
+        <span>🎯 Moves: <strong id="moves-display">0</strong></span>
+        <span>✅ Pairs: <strong id="pairs-display">0 / 8</strong></span>
+        <span>⏱️ Time: <strong id="timer-display">0</strong>s</span>
+    </div>
+
+    <div id="game-grid" class="grid"></div>
+
+    <div id="result-message"></div>
+
+    <div class="controls">
+        <button onclick="saveAndReset()">💾 Save Score & Play Again</button>
+        <button class="btn-secondary" onclick="resetGame()">🔄 Restart</button>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  CONFIGURATION
+    // ============================================================
+    const USER_ID = 1;
+    const API_URL = 'http://127.0.0.1:5000/api/save_game';
+    const PROGRESS_URL = 'http://127.0.0.1:5000/api/progress/1';
+
+    // ============================================================
+    //  GAME STATE
+    // ============================================================
+    let cards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let moves = 0;
+    let isLocked = false;
+    let timerInterval = null;
+    let seconds = 0;
+    let gameFinished = false;
+    let difficulty = 'Easy';
+    let totalPairs = 8;
+
+    const EMOJI_SETS = {
+        Easy: ['🥭', '🍌', '🍇', '🍉', '🍊', '🥝', '🍓', '🍒'],
+        Medium: ['🥭', '🍌', '🍇', '🍉', '🍊', '🥝', '🍓', '🍒', '🐶', '🐱', '🐭', '🐹'],
+        Hard: ['🥭', '🍌', '🍇', '🍉', '🍊', '🥝', '🍓', '🍒', '🐶', '🐱', '🐭', '🐹', '🦊', '🐻', '🐼', '🐨']
+    };
+
+    const GRID_CONFIG = {
+        Easy: { cols: 4, pairs: 8 },
+        Medium: { cols: 4, pairs: 12 },
+        Hard: { cols: 6, pairs: 16 }
+    };
+
+    // ============================================================
+    //  DOM REFS
+    // ============================================================
+    const grid = document.getElementById('game-grid');
+    const movesDisplay = document.getElementById('moves-display');
+    const pairsDisplay = document.getElementById('pairs-display');
+    const timerDisplay = document.getElementById('timer-display');
+    const resultMsg = document.getElementById('result-message');
+    const aiDecision = document.getElementById('ai-decision');
+
+    // ============================================================
+    //  🧠 AI: RECOMMEND DIFFICULTY
+    // ============================================================
+    async function getAdaptiveDifficulty() {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/api/recommend_difficulty/${USER_ID}`);
+            const data = await response.json();
+            console.log('AI Response:', data);
+            if (data.recommended_difficulty) {
+                return data;
+            } else {
+                return {
+                    recommended_difficulty: 'Easy',
+                    reason: 'No games played yet — starting with Easy!',
+                    average_score: 0,
+                    games_played: 0
+                };
+            }
+        } catch (error) {
+            console.warn('AI API not reachable. Defaulting to Easy.');
+            return {
+                recommended_difficulty: 'Easy',
+                reason: 'Backend not reachable — using Easy mode.',
+                average_score: 0,
+                games_played: 0
+            };
+        }
+    }
+
+    // ============================================================
+    //  INIT GAME
+    // ============================================================
+    async function initGame() {
+        const aiResult = await getAdaptiveDifficulty();
+        difficulty = aiResult.recommended_difficulty;
+
+        let avgText = aiResult.average_score ? `(Avg: ${aiResult.average_score}%)` : '';
+        aiDecision.innerHTML = `
+            🧠 AI recommends: <strong>${difficulty}</strong> 
+            — ${aiResult.reason} ${avgText}
+        `;
+
+        const config = GRID_CONFIG[difficulty];
+        totalPairs = config.pairs;
+        const emojis = EMOJI_SETS[difficulty];
+
+        const deck = [...emojis, ...emojis];
+        cards = shuffleArray(deck);
+
+        grid.style.gridTemplateColumns = `repeat(${config.cols}, 1fr)`;
+        renderCards();
+        resetStats();
+
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (!gameFinished) {
+                seconds++;
+                timerDisplay.textContent = seconds;
+            }
+        }, 1000);
+    }
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function renderCards() {
+        grid.innerHTML = '';
+        cards.forEach((emoji, index) => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.index = index;
+            card.dataset.emoji = emoji;
+            card.textContent = '?';
+            card.addEventListener('click', () => flipCard(card, index));
+            grid.appendChild(card);
+        });
+    }
+
+    function resetStats() {
+        moves = 0;
+        matchedPairs = 0;
+        seconds = 0;
+        gameFinished = false;
+        flippedCards = [];
+        isLocked = false;
+        movesDisplay.textContent = moves;
+        pairsDisplay.textContent = matchedPairs + ' / ' + totalPairs;
+        timerDisplay.textContent = '0';
+        resultMsg.textContent = '';
+    }
+
+    // ============================================================
+    //  CARD FLIP LOGIC
+    // ============================================================
+    function flipCard(card, index) {
+        if (isLocked) return;
+        if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+        if (flippedCards.length >= 2) return;
+
+        card.classList.add('flipped');
+        card.textContent = card.dataset.emoji;
+        flippedCards.push({ card, index });
+
+        if (flippedCards.length === 2) {
+            moves++;
+            movesDisplay.textContent = moves;
+            checkMatch();
+        }
+    }
+
+    function checkMatch() {
+        isLocked = true;
+        const [first, second] = flippedCards;
+
+        if (cards[first.index] === cards[second.index]) {
+            first.card.classList.add('matched');
+            second.card.classList.add('matched');
+            matchedPairs++;
+            pairsDisplay.textContent = matchedPairs + ' / ' + totalPairs;
+            flippedCards = [];
+            isLocked = false;
+
+            if (matchedPairs === totalPairs) {
+                gameFinished = true;
+                clearInterval(timerInterval);
+                resultMsg.innerHTML = '🎉🎊 AMAZING! You matched all pairs! 🎊🎉';
+            }
+        } else {
+            setTimeout(() => {
+                first.card.classList.remove('flipped');
+                second.card.classList.remove('flipped');
+                first.card.textContent = '?';
+                second.card.textContent = '?';
+                flippedCards = [];
+                isLocked = false;
+            }, 800);
+        }
+    }
+
+    // ============================================================
+    //  SAVE & RESET
+    // ============================================================
+    function saveAndReset() {
+        if (matchedPairs === 0) {
+            resultMsg.innerHTML = '⚠️ Play a game first! Match some pairs.';
+            return;
+        }
+
+        const perfectMoves = totalPairs;
+        let score = Math.max(0, 100 - ((moves - perfectMoves) * 5));
+        if (score > 100) score = 100;
+
+        const payload = {
+            user_id: USER_ID,
+            game_id: 'memory_match',
+            difficulty: difficulty,
+            score: Math.round(score),
+            time_taken: seconds
+        };
+
+        resultMsg.innerHTML = '⏳ Saving score...';
+
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                resultMsg.innerHTML = `✅ Score saved! (${Math.round(score)}%) 🎉`;
+            } else {
+                resultMsg.innerHTML = '❌ Error saving score. Is the backend running?';
+            }
+            setTimeout(() => resetGame(), 1200);
+        })
+        .catch(() => {
+            resultMsg.innerHTML = '❌ Backend not reachable! Start `python run.py`.';
+            setTimeout(() => resetGame(), 2000);
+        });
+    }
+
+    function resetGame() {
+        clearInterval(timerInterval);
+        initGame();
+    }
+
+    // ============================================================
+    //  START!
+    // ============================================================
+    initGame();
+</script>
+</body>
+</html>
