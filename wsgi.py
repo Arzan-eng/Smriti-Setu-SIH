@@ -1,13 +1,16 @@
 from flask import Flask, jsonify
+from app.routes import main_bp   # 👈 Import your blueprint
 
 app = Flask(__name__)
 
-# ✅ ADD A ROUTE
+# ✅ Register the blueprint (this loads all your routes)
+app.register_blueprint(main_bp)
+
+# ✅ Keep test routes (optional)
 @app.route('/ping')
 def ping():
     return jsonify({"status": "ok", "message": "Flask is working!"})
 
-# ✅ ADD A ROOT ROUTE
 @app.route('/')
 def home():
     return jsonify({"message": "Hello from Smriti-Setu!"})
