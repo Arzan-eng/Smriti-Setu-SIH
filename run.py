@@ -4,7 +4,7 @@ from app.models import db
 from app.routes import main_bp
 from flask import Flask
 from flask_cors import CORS
-from scheduler import start_scheduler  # 👈 NEW: Import scheduler
+# from scheduler import start_scheduler  # 👈 TEMPORARILY DISABLED
 import logging
 
 # Set up logging to see alerts in terminal
@@ -23,8 +23,7 @@ with app.app_context():
     db.create_all()
     print("✅ Database is ready!")
 
-# 👈 NEW: Start the scheduler
-start_scheduler(app)
+# start_scheduler(app)  # 👈 TEMPORARILY DISABLED
 
 if __name__ == '__main__':
     import os
