@@ -3,5 +3,7 @@ services:
     name: smriti-setu-backend
     env: python
     plan: free
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: |
+      apt-get update && apt-get install -y postgresql-client libpq-dev
+      pip install -r requirements.txt
     startCommand: "gunicorn run:app --bind 0.0.0.0:$PORT"
