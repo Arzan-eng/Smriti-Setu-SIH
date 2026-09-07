@@ -15,9 +15,6 @@ app = Flask(__name__)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config.from_object(Config)
 
-# ============================================================
-# ✅ FORCE SQLITE (Ignore PostgreSQL completely)
-# ============================================================
 # Ensure instance folder exists for SQLite
 instance_path = os.path.join(BASE_DIR, 'instance')
 if not os.path.exists(instance_path):
@@ -30,7 +27,9 @@ print("✅ Using SQLite database")
 CORS(app)
 db.init_app(app)
 
-# ✅ Register blueprint
+# ============================================================
+# 🔥 CRITICAL: THIS MUST BE OUTSIDE THE if __name__ BLOCK
+# ============================================================
 app.register_blueprint(main_bp)
 
 with app.app_context():
@@ -44,3 +43,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print(f"🔥 Server starting on port {port}")
     app.run(debug=True, host='0.0.0.0', port=port)
+    
