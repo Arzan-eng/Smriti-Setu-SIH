@@ -12,28 +12,20 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config.from_object(Config)
 
 # ============================================================
-# 🔥 FIX: Force PostgreSQL using Render's DATABASE_URL
+# ✅ FORCE SQLITE (Ignore PostgreSQL completely)
 # ============================================================
-# If DATABASE_URL exists, use it (PostgreSQL)
-# Otherwise, fallback to SQLite (local development)
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    # Render automatically adds '?sslmode=require' sometimes, but we need to handle it
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-    print("✅ Using PostgreSQL database")
-else:
-    # Fallback to SQLite (for local testing)
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    instance_path = os.path.join(BASE_DIR, 'instance')
-    if not os.path.exists(instance_path):
-        os.makedirs(instance_path)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'smriti.db')
-    print("⚠️ Using SQLite (local mode)")
+# Ensure instance folder exists for SQLite
+instance_path = os.path.join(BASE_DIR, 'instance')
+if not os.path.exists(instance_path):
+    os.makedirs(instance_path)
+    print("✅ Created instance folder for SQLite")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'smriti.db')
+print("✅ Using SQLite database")
 
 CORS(app)
 db.init_app(app)
