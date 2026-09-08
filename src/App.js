@@ -261,7 +261,7 @@ function App() {
                               <div className="med-check"><i className="fas fa-check"></i></div>
                               <span className="med-name">{med.name}</span>
                               <span className="med-dose">{med.dose}</span>
-                              {med.displayTime && <span className="med-time" style={{fontSize:'12px', color:'#8E8A82'}}>{med.displayTime}</span>}
+                              {med.displayTime && <span className="med-time">{med.displayTime}</span>}
                               {med.streak && <span className="med-streak"><i className="fas fa-fire"></i> {med.streak}</span>}
                             </div>
                           ))}
@@ -335,35 +335,60 @@ function App() {
       case 'medicine':
         return (
           <div className="medicine-tab-content" id="medicine-section">
-            <h2>💊 Today's Medications</h2>
-            <div className="medicine-summary">
-              <p>✅ {getTakenCount()} taken of {getTotalCount()} total</p>
-              <button className="refresh-btn" onClick={fetchMedicines}>⟳ Refresh</button>
+            <header className="page-header animate-in">
+              <div className="greeting-text">Stay On Track</div>
+              <h1>💊 Medications</h1>
+            </header>
+
+            <div className="hero-banner coral animate-in delay-1">
+              <h2>Today's Progress</h2>
+              <p>{getTakenCount()} of {getTotalCount()} medications taken</p>
+              <div className="hero-progress-bar">
+                <div className="hero-progress-fill" style={{ width: `${getTotalCount() > 0 ? (getTakenCount() / getTotalCount()) * 100 : 0}%` }}></div>
+              </div>
             </div>
-            <div className="medicine-list">
-              {meds.length === 0 ? (
-                <p>No medications found. Add some!</p>
-              ) : (
-                meds.map(med => (
-                  <div key={med.id} className={`medicine-item ${med.taken ? 'taken' : 'pending'}`}>
-                    <div className="med-info">
-                      <span className="med-name">{med.name}</span>
-                      <span className="med-dose">{med.dose}</span>
-                      <span className="med-time">{med.displayTime || med.time}</span>
+
+            <div className="section-label animate-in delay-2">Schedule</div>
+
+            {meds.length === 0 ? (
+              <div className="empty-state">
+                <i className="fas fa-pills" style={{ fontSize: '48px', color: '#8E8A82', marginBottom: '16px' }}></i>
+                <p style={{ color: '#8E8A82', textAlign: 'center' }}>No medications scheduled. Add one below!</p>
+              </div>
+            ) : (
+              ['Morning', 'Afternoon', 'Evening'].map(slot => {
+                const items = meds.filter(m => m.time === slot);
+                if (items.length === 0) return null;
+                const icons = {
+                  Morning: { icon: 'fa-sun', color: '#D4A017', bg: '#FFF7E6' },
+                  Afternoon: { icon: 'fa-cloud-sun', color: '#E8734A', bg: '#FFF0EB' },
+                  Evening: { icon: 'fa-moon', color: '#7C3AED', bg: '#F3EEFF' }
+                };
+                const allTaken = items.every(m => m.taken);
+                return (
+                  <div className="med-card-full animate-in delay-2" key={slot}>
+                    <div className="time-header">
+                      <i className={`fas ${icons[slot].icon}`} style={{ color: icons[slot].color }}></i>
+                      <span>{slot}</span>
+                      <span className={`time-status ${allTaken ? 'done' : 'pending'}`}>
+                        {allTaken ? '✅ Completed' : '⏳ Pending'}
+                      </span>
                     </div>
-                    <button
-                      className={`med-toggle-btn ${med.taken ? 'taken-btn' : 'take-btn'}`}
-                      onClick={() => toggleMed(med.id)}
-                      disabled={med.taken}
-                    >
-                      {med.taken ? '✓ Taken' : 'Take Now'}
-                    </button>
+                    {items.map(med => (
+                      <div key={med.id} className={`pill-item ${med.taken ? 'taken' : ''}`} onClick={() => toggleMed(med.id)}>
+                        <div className="pill-check"><i className="fas fa-check"></i></div>
+                        <span className="pill-name">{med.name}</span>
+                        <span className="pill-dosage">{med.dose}</span>
+                        {med.displayTime && <span className="pill-time">{med.displayTime}</span>}
+                      </div>
+                    ))}
                   </div>
-                ))
-              )}
-            </div>
-            <div className="add-medicine-form">
-              <h4>➕ Add New Medicine (Caregiver)</h4>
+                );
+              })
+            )}
+
+            <div className="add-medicine-form animate-in delay-3">
+              <h4>➕ Add New Medicine</h4>
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 const fd = new FormData(e.target);
@@ -386,7 +411,7 @@ function App() {
                 <input name="name" placeholder="Medicine name" required />
                 <input name="dose" placeholder="Dosage (e.g. 1 tablet)" required />
                 <input name="time" type="time" required />
-                <button type="submit">Add Medicine</button>
+                <button type="submit"><i className="fas fa-plus"></i> Add</button>
               </form>
             </div>
           </div>
@@ -395,16 +420,92 @@ function App() {
       case 'support':
         return (
           <div className="support-tab-content">
-            <h2>🆘 Emergency & Support</h2>
-            <div className="emergency-box" id="emergency-box">
-              <h3>📞 Helpline Numbers</h3>
-              <p><strong>National Helpline:</strong> 1800-XXX-XXXX</p>
-              <p><strong>Local Support:</strong> 123-456-7890</p>
-              <p><strong>Caregiver Hotline:</strong> 987-654-3210</p>
+            <header className="page-header animate-in">
+              <div className="greeting-text">We're Here For You</div>
+              <h1>🆘 Support</h1>
+            </header>
+
+            <div className="hero-banner amber animate-in delay-1">
+              <h2>24/7 Assistance</h2>
+              <p>Help is always just a click away</p>
             </div>
-            <div className="support-options">
-              <button className="sos-btn">🚨 Call Emergency</button>
-              <button className="support-btn">💬 Chat with Caregiver</button>
+
+            <div className="section-label animate-in delay-2">Contact & Resources</div>
+
+            <div className="support-grid">
+              <div className="support-option animate-in delay-2" onClick={() => alert('Calling helpline...')}>
+                <div className="support-opt-icon" style={{ background: '#E6F5F0', color: '#0D9B76' }}>
+                  <i className="fas fa-phone"></i>
+                </div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">Helpline</div>
+                  <div className="support-opt-desc">1800-XXX-XXXX — 24/7</div>
+                </div>
+                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+              </div>
+
+              <div className="support-option animate-in delay-2" onClick={() => alert('Opening live chat...')}>
+                <div className="support-opt-icon" style={{ background: '#FFF0EB', color: '#E8734A' }}>
+                  <i className="fas fa-comments"></i>
+                </div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">Live Chat</div>
+                  <div className="support-opt-desc">Chat with a care specialist</div>
+                </div>
+                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+              </div>
+
+              <div className="support-option animate-in delay-3" onClick={() => alert('Opening FAQ...')}>
+                <div className="support-opt-icon" style={{ background: '#FFF7E6', color: '#D4A017' }}>
+                  <i className="fas fa-circle-question"></i>
+                </div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">FAQ & Guides</div>
+                  <div className="support-opt-desc">Common questions answered</div>
+                </div>
+                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+              </div>
+
+              <div className="support-option animate-in delay-3" onClick={() => alert('Scheduling callback...')}>
+                <div className="support-opt-icon" style={{ background: '#F3EEFF', color: '#7C3AED' }}>
+                  <i className="fas fa-calendar-check"></i>
+                </div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">Schedule Callback</div>
+                  <div className="support-opt-desc">Request a call at your convenience</div>
+                </div>
+                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+              </div>
+
+              <div className="support-option animate-in delay-4" onClick={() => alert('Opening community...')}>
+                <div className="support-opt-icon" style={{ background: '#E6F0FF', color: '#2563EB' }}>
+                  <i className="fas fa-users"></i>
+                </div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">Community Forum</div>
+                  <div className="support-opt-desc">Connect with others</div>
+                </div>
+                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+              </div>
+
+              <div className="support-option animate-in delay-4" onClick={() => alert('Opening resources...')}>
+                <div className="support-opt-icon" style={{ background: '#E6F5F0', color: '#0D9B76' }}>
+                  <i className="fas fa-book-medical"></i>
+                </div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">Educational Resources</div>
+                  <div className="support-opt-desc">Articles and videos about memory care</div>
+                </div>
+                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+              </div>
+            </div>
+
+            <div className="emergency-box animate-in delay-5" id="emergency-box">
+              <div className="em-title">🚨 Emergency?</div>
+              <div className="em-desc">Call 911 or your local emergency number immediately</div>
+              <button className="emergency-call-btn" onClick={() => alert('Calling emergency...')}>
+                <i className="fas fa-phone"></i> Call Emergency
+              </button>
             </div>
           </div>
         );
