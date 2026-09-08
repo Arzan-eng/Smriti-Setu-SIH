@@ -1,15 +1,23 @@
 from flask import Flask, jsonify
-from flask_cors import CORS  # ✅ ADD THIS LINE (Import CORS)
+from flask_cors import CORS
 from app.routes import main_bp
 from app.models import db
 import os
 
 app = Flask(__name__)
 
-# ✅ ADD THIS LINE RIGHT HERE (Enable CORS for your frontend)
-CORS(app, origins=["https://smriti-setu-sih-1.vercel.app", "http://localhost:3000"])
+# ✅ FIXED CORS CONFIGURATION
+CORS(app, 
+     origins=[
+         "https://smriti-setu-sih.vercel.app",   # Your new domain
+         "https://smriti-setu-sih-1.vercel.app", # Backup
+         "http://localhost:3000"
+     ],
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True
+)
 
-# ✅ Create instance folder (for SQLite)
+# ✅ Create instance folder
 instance_path = os.path.join(os.path.dirname(__file__), 'instance')
 if not os.path.exists(instance_path):
     os.makedirs(instance_path)
@@ -27,7 +35,7 @@ with app.app_context():
     db.create_all()
     print("✅ Database tables created")
 
-# ✅ Register blueprint (this loads ALL your routes)
+# ✅ Register blueprint
 app.register_blueprint(main_bp)
 
 # ✅ Test routes
