@@ -9,7 +9,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [activeGame, setActiveGame] = useState(null); // null, 'memory', or 'kichu'
   const [meds, setMeds] = useState([]);
-  const [userId] = useState(1); // Hardcoded for now
+  const [userId] = useState(1);
   const [voiceReply, setVoiceReply] = useState('');
 
   // ── Fetch medicines from backend ──
@@ -58,11 +58,9 @@ function App() {
     const med = meds.find(m => m.id === id);
     if (!med) return;
 
-    // Optimistic update
     const updated = meds.map(m => m.id === id ? { ...m, taken: !m.taken } : m);
     setMeds(updated);
 
-    // Only call backend if marking as taken (not untaken)
     if (!med.taken) {
       try {
         await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/take', {
@@ -70,13 +68,12 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ medication_id: id })
         });
-        fetchMedicines(); // refresh from backend
+        fetchMedicines();
       } catch (error) {
         console.error('Failed to mark medicine as taken:', error);
         fetchMedicines();
       }
     } else {
-      // If already taken, just revert (backend doesn't support untake)
       fetchMedicines();
     }
   };
@@ -84,7 +81,6 @@ function App() {
   // ── Voice Assistant Action Handler ──
   const executeAction = (action) => {
     if (!action) return;
-
     console.log('Executing action:', action);
 
     switch (action.type) {
@@ -94,19 +90,17 @@ function App() {
           if (action.target === 'game' && action.game) {
             setActiveGame(action.game);
           } else if (action.target === 'game') {
-            setActiveGame(null); // show game selector
+            setActiveGame(null);
           }
         }
         if (action.highlight) {
           flashElement(action.highlight);
         }
         break;
-
       case 'UPDATE_MEDICINE':
         fetchMedicines();
         flashElement('medicine-section');
         break;
-
       case 'ASK_CONFIRMATION':
         const confirmed = window.confirm(action.message || 'Do you want to mark this medicine as taken?');
         if (confirmed && action.medicationId) {
@@ -119,14 +113,12 @@ function App() {
             .catch(err => console.error(err));
         }
         break;
-
       case 'OPEN_SOS':
         setActiveTab('support');
         if (action.highlight) {
           setTimeout(() => flashElement(action.highlight), 300);
         }
         break;
-
       case 'IDLE':
       default:
         break;
@@ -148,7 +140,7 @@ function App() {
     }, 3000);
   };
 
-  // ── Helpers for Home tab ──
+  // ── Helpers ──
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -166,45 +158,186 @@ function App() {
   const getTakenCount = () => meds.filter(m => m.taken).length;
   const getTotalCount = () => meds.length;
 
+  // ── Weekly Report ──
+  const generateWeeklyReport = async () => {
+    try {
+      const res = await fetch('https://smriti-setu-sih-1.onrender.com/api/progress/1');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      if (data.length === 0) {
+        alert('📊 No game data yet. Play some games!');
+        return;
+      }
+      const avg = data.reduce((sum, d) => sum + d.avg_score, 0) / data.length;
+      alert(`📊 Weekly Avg: ${Math.round(avg)}% across ${data.length} days`);
+    } catch (error) {
+      alert('📊 Weekly Report: 82% average (sample data)');
+    }
+  };
+
   // ── Render Tab Content ──
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="home-content">
-            <div className="greeting-section">
-              <h2>{getGreeting()}! 🌤️</h2>
-              <p className="date-display">{getDateStr(0)}</p>
-            </div>
+          <div className="page-container">
+            <header className="page-header animate-in">
+              <div className="greeting-text" id="greetingText">{getGreeting()}</div>
+              <h1>NER Memory Companion</h1>
+            </header>
 
-            <div className="stats-grid">
-              <div className="stat-card" id="medicine-section">
-                <h3>💊 Today's Medications</h3>
-                <p className="stat-number">{getTakenCount()}/{getTotalCount()} taken</p>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${getTotalCount() > 0 ? (getTakenCount() / getTotalCount()) * 100 : 0}%` }}></div>
+            <div className="home-grid">
+              {/* ─── LEFT COLUMN ─── */}
+              <div className="col-left">
+                {/* Daily Exercise Scores */}
+                <div className="section-label animate-in delay-1">Daily Exercise Scores</div>
+                <div className="exercise-card animate-in delay-1">
+                  <div className="card-head">
+                    <span className="card-title">Yesterday's Summary</span>
+                    <span className="card-date">{getDateStr(-1)}</span>
+                  </div>
+                  <div className="score-row">
+                    <div className="score-item accent-bg">
+                      <div className="score-label">Memory</div>
+                      <div className="score-ring">
+                        <svg viewBox="0 0 36 36">
+                          <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
+                          <circle className="ring-fill accent" cx="18" cy="18" r="15.5"
+                            stroke-dasharray="97.4" stroke-dashoffset="14.6"></circle>
+                        </svg>
+                        <span className="score-value">85%</span>
+                      </div>
+                      <div className="score-percent">+3% from last week</div>
+                    </div>
+                    <div className="score-item coral-bg">
+                      <div className="score-label">Puzzle Skills</div>
+                      <div className="score-ring">
+                        <svg viewBox="0 0 36 36">
+                          <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
+                          <circle className="ring-fill coral" cx="18" cy="18" r="15.5"
+                            stroke-dasharray="97.4" stroke-dashoffset="21.4"></circle>
+                        </svg>
+                        <span className="score-value">78%</span>
+                      </div>
+                      <div className="score-percent">+5% from last week</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="section-label animate-in delay-2">Quick Actions</div>
+                <div className="quick-actions animate-in delay-2">
+                  <div className="action-card" onClick={() => { setActiveTab('exercise'); }}>
+                    <div className="action-icon teal"><i className="fas fa-brain"></i></div>
+                    <div className="action-title">Start Exercise</div>
+                    <div className="action-sub">3 new sessions</div>
+                  </div>
+                  <div className="action-card" onClick={() => { setActiveTab('game'); setActiveGame(null); }}>
+                    <div className="action-icon purple"><i className="fas fa-puzzle-piece"></i></div>
+                    <div className="action-title">Play Games</div>
+                    <div className="action-sub">Sharpen memory</div>
+                  </div>
+                  <div className="action-card" onClick={() => { setActiveTab('medicine'); }}>
+                    <div className="action-icon coral"><i className="fas fa-pills"></i></div>
+                    <div className="action-title">Log Medicine</div>
+                    <div className="action-sub">{getTotalCount() - getTakenCount()} remaining</div>
+                  </div>
+                  <div className="action-card" onClick={generateWeeklyReport}>
+                    <div className="action-icon amber"><i className="fas fa-chart-line"></i></div>
+                    <div className="action-title">Weekly Report</div>
+                    <div className="action-sub">View progress</div>
+                  </div>
+                </div>
+
+                {/* Support Banner */}
+                <div className="support-banner animate-in delay-3" onClick={() => setActiveTab('support')}>
+                  <div className="support-icon"><i className="fas fa-headset"></i></div>
+                  <div className="support-text">
+                    <div className="support-title">Support 24/7 Helpline</div>
+                    <div className="support-num">1800-XXX-XXXX</div>
+                  </div>
+                  <span className="support-arrow"><i className="fas fa-chevron-right"></i></span>
+                </div>
+
+                {/* Voice Reply Box */}
+                <div className="voice-reply-box animate-in delay-3">
+                  <p><span className="reply-label">🗣️ AI:</span> {voiceReply || 'Say "Game", "Medicine", or "Help" to navigate'}</p>
                 </div>
               </div>
-              <div className="stat-card" id="memory-card">
-                <h3>🧠 Memory Match</h3>
-                <p className="stat-number">85%</p>
-                <p>Last score</p>
-              </div>
-              <div className="stat-card">
-                <h3>🎮 Games Played</h3>
-                <p className="stat-number">12</p>
-                <p>This week</p>
-              </div>
-            </div>
 
-            <div className="quick-actions">
-              <button onClick={() => { setActiveTab('game'); setActiveGame(null); }}>🎮 Play Games</button>
-              <button onClick={() => { setActiveTab('medicine'); }}>💊 Log Medicine</button>
-              <button onClick={() => { setActiveTab('support'); }}>🆘 Emergency</button>
-            </div>
+              {/* ─── RIGHT COLUMN ─── */}
+              <div className="col-right">
+                <div className="section-label animate-in delay-1">Daily Medicine Check</div>
+                <div className="medicine-card animate-in delay-1" id="medicine-section">
+                  <div className="card-head">
+                    <span className="card-title">Today's Medications</span>
+                    <span className="card-date">{getDateStr(0)}</span>
+                  </div>
 
-            <div className="voice-reply-box">
-              <p>🗣️ {voiceReply || 'Say "Game", "Medicine", or "Help" to navigate'}</p>
+                  {meds.length === 0 ? (
+                    <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '20px' }}>
+                      No medications scheduled
+                    </p>
+                  ) : (
+                    <>
+                      {/* Morning */}
+                      {meds.filter(m => m.time === 'Morning').length > 0 && (
+                        <div className="med-time-group">
+                          <div className="med-time-label"><i className="fas fa-sun" style={{ color: '#D4A017' }}></i> Morning</div>
+                          {meds.filter(m => m.time === 'Morning').map(med => (
+                            <div 
+                              key={med.id} 
+                              className={`med-item ${med.taken ? 'completed' : ''}`}
+                              onClick={() => toggleMed(med.id)}
+                            >
+                              <div className="med-check"><i className="fas fa-check"></i></div>
+                              <span className="med-name">{med.name}</span>
+                              <span className="med-dose">{med.dose}</span>
+                              {med.streak && <span className="med-streak"><i className="fas fa-fire"></i> {med.streak}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Afternoon */}
+                      {meds.filter(m => m.time === 'Afternoon').length > 0 && (
+                        <div className="med-time-group">
+                          <div className="med-time-label"><i className="fas fa-cloud-sun" style={{ color: '#E8734A' }}></i> Afternoon</div>
+                          {meds.filter(m => m.time === 'Afternoon').map(med => (
+                            <div 
+                              key={med.id} 
+                              className={`med-item ${med.taken ? 'completed' : ''}`}
+                              onClick={() => toggleMed(med.id)}
+                            >
+                              <div className="med-check"><i className="fas fa-check"></i></div>
+                              <span className="med-name">{med.name}</span>
+                              <span className="med-dose">{med.dose}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Evening */}
+                      {meds.filter(m => m.time === 'Evening').length > 0 && (
+                        <div className="med-time-group">
+                          <div className="med-time-label"><i className="fas fa-moon" style={{ color: '#7C3AED' }}></i> Evening</div>
+                          {meds.filter(m => m.time === 'Evening').map(med => (
+                            <div 
+                              key={med.id} 
+                              className={`med-item ${med.taken ? 'completed' : ''}`}
+                              onClick={() => toggleMed(med.id)}
+                            >
+                              <div className="med-check"><i className="fas fa-check"></i></div>
+                              <span className="med-name">{med.name}</span>
+                              <span className="med-dose">{med.dose}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -239,7 +372,7 @@ function App() {
                 userId={userId}
                 onGameEnd={() => {
                   setActiveGame(null);
-                  fetchMedicines(); // refresh progress if needed
+                  fetchMedicines();
                 }}
               />
             ) : (
@@ -341,7 +474,6 @@ function App() {
   // ── Main Render ──
   return (
     <div className="App">
-      {/* Navigation Bar */}
       <nav className="nav-bar">
         <div className="nav-logo">🧠 Smriti-Setu</div>
         <div className="nav-tabs">
@@ -352,12 +484,10 @@ function App() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="main-content">
         {renderContent()}
       </div>
 
-      {/* Voice Assistant Footer */}
       <div className="voice-assistant-footer">
         <VoiceAssistant
           userId={userId}
