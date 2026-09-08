@@ -6,16 +6,10 @@ import os
 
 app = Flask(__name__)
 
-# ✅ FIXED CORS CONFIGURATION
-CORS(app, 
-     origins=[
-         "https://smriti-setu-sih.vercel.app",   # Your new domain
-         "https://smriti-setu-sih-1.vercel.app", # Backup
-         "http://localhost:3000"
-     ],
-     allow_headers=["Content-Type", "Authorization"],
-     supports_credentials=True
-)
+# ✅ CORS – Allow ALL origins (for development/testing)
+# This will make the voice assistant work on any Vercel URL.
+# You can restrict it later to specific domains if needed.
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ✅ Create instance folder
 instance_path = os.path.join(os.path.dirname(__file__), 'instance')
