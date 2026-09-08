@@ -27,7 +27,7 @@ const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Your browser does not support speech recognition. Please type your command.');
+      alert('Your browser does not support speech recognition.');
       return;
     }
 
@@ -51,7 +51,7 @@ const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
       console.error('Speech recognition error:', event.error);
       setIsListening(false);
       if (event.error === 'not-allowed') {
-        alert('Please allow microphone access to use voice commands.');
+        alert('Please allow microphone access.');
       }
     };
 
@@ -61,16 +61,14 @@ const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
   };
 
   return (
-    <div className="voice-assistant">
-      <button
-        className={`voice-btn ${isListening ? 'listening' : ''}`}
-        onClick={handleVoiceInput}
-        disabled={isListening}
-      >
-        {isListening ? '🎤 Listening...' : '🎤 Speak'}
-      </button>
-      {transcript && <p className="transcript">You said: "{transcript}"</p>}
-    </div>
+    <button
+      className={`voice-btn ${isListening ? 'listening' : ''}`}
+      onClick={handleVoiceInput}
+      disabled={isListening}
+      title="Voice Assistant"
+    >
+      <i className="fas fa-microphone"></i>
+    </button>
   );
 };
 
