@@ -1,9 +1,13 @@
 from flask import Flask, jsonify
+from flask_cors import CORS  # ✅ ADD THIS LINE (Import CORS)
 from app.routes import main_bp
 from app.models import db
 import os
 
 app = Flask(__name__)
+
+# ✅ ADD THIS LINE RIGHT HERE (Enable CORS for your frontend)
+CORS(app, origins=["https://smriti-setu-sih-1.vercel.app", "http://localhost:3000"])
 
 # ✅ Create instance folder (for SQLite)
 instance_path = os.path.join(os.path.dirname(__file__), 'instance')
