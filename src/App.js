@@ -7,12 +7,12 @@ import KichuKichuGame from './KichuKichuGame';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
-  const [activeGame, setActiveGame] = useState(null); // null, 'memory', or 'kichu'
+  const [activeGame, setActiveGame] = useState(null);
   const [meds, setMeds] = useState([]);
   const [userId] = useState(1);
   const [voiceReply, setVoiceReply] = useState('');
 
-  // ── Fetch medicines from backend ──
+  // ── Fetch medicines ──
   const fetchMedicines = async () => {
     try {
       const res = await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/1');
@@ -28,23 +28,28 @@ function App() {
       }));
       const withTimeLabel = mapped.map(med => {
         let timeLabel = 'Morning';
+        let displayTime = '';
         if (med.time) {
           const hour = parseInt(med.time.split(':')[0]);
+          const mins = med.time.split(':')[1];
           if (hour >= 12 && hour < 17) timeLabel = 'Afternoon';
           else if (hour >= 17) timeLabel = 'Evening';
+          // Format time for display (e.g., "2:00 PM")
+          const h = hour > 12 ? hour - 12 : hour;
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          displayTime = `${h}:${mins} ${ampm}`;
         }
-        return { ...med, time: timeLabel };
+        return { ...med, time: timeLabel, displayTime };
       });
       setMeds(withTimeLabel);
     } catch (error) {
       console.error('Error fetching medicines:', error);
-      // Fallback hardcoded data
       setMeds([
-        { id: 1, name: 'Donepezil 10mg', dose: '1 tablet', time: 'Morning', taken: true, streak: '12d' },
-        { id: 2, name: 'Vitamin B12 500mcg', dose: '1 capsule', time: 'Morning', taken: true },
-        { id: 3, name: 'Memantine 5mg', dose: '1 tablet', time: 'Afternoon', taken: false },
-        { id: 4, name: 'Melatonin 3mg', dose: '1 tablet', time: 'Evening', taken: false },
-        { id: 5, name: 'Omega-3 1000mg', dose: '1 softgel', time: 'Evening', taken: false },
+        { id: 1, name: 'Donepezil 10mg', dose: '1 tablet', time: 'Morning', displayTime: '8:00 AM', taken: true, streak: '12d' },
+        { id: 2, name: 'Vitamin B12 500mcg', dose: '1 capsule', time: 'Morning', displayTime: '8:00 AM', taken: true },
+        { id: 3, name: 'Memantine 5mg', dose: '1 tablet', time: 'Afternoon', displayTime: '2:00 PM', taken: false },
+        { id: 4, name: 'Melatonin 3mg', dose: '1 tablet', time: 'Evening', displayTime: '9:00 PM', taken: false },
+        { id: 5, name: 'Omega-3 1000mg', dose: '1 softgel', time: 'Evening', displayTime: '9:00 PM', taken: false },
       ]);
     }
   };
@@ -53,14 +58,12 @@ function App() {
     fetchMedicines();
   }, []);
 
-  // ── Toggle medication taken status ──
+  // ── Toggle medication ──
   const toggleMed = async (id) => {
     const med = meds.find(m => m.id === id);
     if (!med) return;
-
     const updated = meds.map(m => m.id === id ? { ...m, taken: !m.taken } : m);
     setMeds(updated);
-
     if (!med.taken) {
       try {
         await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/take', {
@@ -82,7 +85,6 @@ function App() {
   const executeAction = (action) => {
     if (!action) return;
     console.log('Executing action:', action);
-
     switch (action.type) {
       case 'NAVIGATE':
         if (action.target) {
@@ -119,13 +121,12 @@ function App() {
           setTimeout(() => flashElement(action.highlight), 300);
         }
         break;
-      case 'IDLE':
       default:
         break;
     }
   };
 
-  // ── Flash Highlight Helper ──
+  // ── Flash Highlight ──
   const flashElement = (id) => {
     const el = document.getElementById(id);
     if (!el) {
@@ -175,21 +176,20 @@ function App() {
     }
   };
 
-  // ── Render Tab Content ──
+  // ── Render Content ──
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
         return (
           <div className="page-container">
             <header className="page-header animate-in">
-              <div className="greeting-text" id="greetingText">{getGreeting()}</div>
+              <div className="greeting-text">{getGreeting()}</div>
               <h1>NER Memory Companion</h1>
             </header>
 
             <div className="home-grid">
-              {/* ─── LEFT COLUMN ─── */}
+              {/* LEFT COLUMN */}
               <div className="col-left">
-                {/* Daily Exercise Scores */}
                 <div className="section-label animate-in delay-1">Daily Exercise Scores</div>
                 <div className="exercise-card animate-in delay-1">
                   <div className="card-head">
@@ -224,10 +224,9 @@ function App() {
                   </div>
                 </div>
 
-                {/* Quick Actions */}
                 <div className="section-label animate-in delay-2">Quick Actions</div>
                 <div className="quick-actions animate-in delay-2">
-                  <div className="action-card" onClick={() => { setActiveTab('exercise'); }}>
+                  <div className="action-card" onClick={() => setActiveTab('exercise')}>
                     <div className="action-icon teal"><i className="fas fa-brain"></i></div>
                     <div className="action-title">Start Exercise</div>
                     <div className="action-sub">3 new sessions</div>
@@ -237,7 +236,7 @@ function App() {
                     <div className="action-title">Play Games</div>
                     <div className="action-sub">Sharpen memory</div>
                   </div>
-                  <div className="action-card" onClick={() => { setActiveTab('medicine'); }}>
+                  <div className="action-card" onClick={() => setActiveTab('medicine')}>
                     <div className="action-icon coral"><i className="fas fa-pills"></i></div>
                     <div className="action-title">Log Medicine</div>
                     <div className="action-sub">{getTotalCount() - getTakenCount()} remaining</div>
@@ -249,7 +248,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Support Banner */}
                 <div className="support-banner animate-in delay-3" onClick={() => setActiveTab('support')}>
                   <div className="support-icon"><i className="fas fa-headset"></i></div>
                   <div className="support-text">
@@ -259,13 +257,12 @@ function App() {
                   <span className="support-arrow"><i className="fas fa-chevron-right"></i></span>
                 </div>
 
-                {/* Voice Reply Box */}
                 <div className="voice-reply-box animate-in delay-3">
                   <p><span className="reply-label">🗣️ AI:</span> {voiceReply || 'Say "Game", "Medicine", or "Help" to navigate'}</p>
                 </div>
               </div>
 
-              {/* ─── RIGHT COLUMN ─── */}
+              {/* RIGHT COLUMN */}
               <div className="col-right">
                 <div className="section-label animate-in delay-1">Daily Medicine Check</div>
                 <div className="medicine-card animate-in delay-1" id="medicine-section">
@@ -275,69 +272,73 @@ function App() {
                   </div>
 
                   {meds.length === 0 ? (
-                    <p style={{ color: 'var(--muted)', textAlign: 'center', padding: '20px' }}>
+                    <p style={{ color: '#8E8A82', textAlign: 'center', padding: '20px' }}>
                       No medications scheduled
                     </p>
                   ) : (
                     <>
-                      {/* Morning */}
-                      {meds.filter(m => m.time === 'Morning').length > 0 && (
-                        <div className="med-time-group">
-                          <div className="med-time-label"><i className="fas fa-sun" style={{ color: '#D4A017' }}></i> Morning</div>
-                          {meds.filter(m => m.time === 'Morning').map(med => (
-                            <div 
-                              key={med.id} 
-                              className={`med-item ${med.taken ? 'completed' : ''}`}
-                              onClick={() => toggleMed(med.id)}
-                            >
-                              <div className="med-check"><i className="fas fa-check"></i></div>
-                              <span className="med-name">{med.name}</span>
-                              <span className="med-dose">{med.dose}</span>
-                              {med.streak && <span className="med-streak"><i className="fas fa-fire"></i> {med.streak}</span>}
+                      {['Morning', 'Afternoon', 'Evening'].map(timeSlot => {
+                        const items = meds.filter(m => m.time === timeSlot);
+                        if (items.length === 0) return null;
+                        const icons = {
+                          Morning: <i className="fas fa-sun" style={{ color: '#D4A017' }}></i>,
+                          Afternoon: <i className="fas fa-cloud-sun" style={{ color: '#E8734A' }}></i>,
+                          Evening: <i className="fas fa-moon" style={{ color: '#7C3AED' }}></i>
+                        };
+                        return (
+                          <div className="med-time-group" key={timeSlot}>
+                            <div className="med-time-label">
+                              {icons[timeSlot]} {timeSlot}
                             </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Afternoon */}
-                      {meds.filter(m => m.time === 'Afternoon').length > 0 && (
-                        <div className="med-time-group">
-                          <div className="med-time-label"><i className="fas fa-cloud-sun" style={{ color: '#E8734A' }}></i> Afternoon</div>
-                          {meds.filter(m => m.time === 'Afternoon').map(med => (
-                            <div 
-                              key={med.id} 
-                              className={`med-item ${med.taken ? 'completed' : ''}`}
-                              onClick={() => toggleMed(med.id)}
-                            >
-                              <div className="med-check"><i className="fas fa-check"></i></div>
-                              <span className="med-name">{med.name}</span>
-                              <span className="med-dose">{med.dose}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Evening */}
-                      {meds.filter(m => m.time === 'Evening').length > 0 && (
-                        <div className="med-time-group">
-                          <div className="med-time-label"><i className="fas fa-moon" style={{ color: '#7C3AED' }}></i> Evening</div>
-                          {meds.filter(m => m.time === 'Evening').map(med => (
-                            <div 
-                              key={med.id} 
-                              className={`med-item ${med.taken ? 'completed' : ''}`}
-                              onClick={() => toggleMed(med.id)}
-                            >
-                              <div className="med-check"><i className="fas fa-check"></i></div>
-                              <span className="med-name">{med.name}</span>
-                              <span className="med-dose">{med.dose}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            {items.map(med => (
+                              <div 
+                                key={med.id} 
+                                className={`med-item ${med.taken ? 'completed' : ''}`}
+                                onClick={() => toggleMed(med.id)}
+                              >
+                                <div className="med-check"><i className="fas fa-check"></i></div>
+                                <span className="med-name">{med.name}</span>
+                                <span className="med-dose">{med.dose}</span>
+                                {med.displayTime && <span className="med-time">{med.displayTime}</span>}
+                                {med.streak && <span className="med-streak"><i className="fas fa-fire"></i> {med.streak}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </>
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        );
+
+      case 'exercise':
+        return (
+          <div className="page-container">
+            <header className="page-header animate-in">
+              <div className="greeting-text">Train Your Mind</div>
+              <h1>Exercises</h1>
+            </header>
+            <div className="hero-banner teal animate-in delay-1">
+              <h2>Weekly Streak</h2>
+              <p>Keep going — consistency is key!</p>
+              <div className="hero-stats">
+                <div className="hero-stat-item"><div className="hero-stat-val">7</div><div className="hero-stat-lbl">Day Streak</div></div>
+                <div className="hero-stat-item"><div className="hero-stat-val">42</div><div className="hero-stat-lbl">Sessions</div></div>
+                <div className="hero-stat-item"><div className="hero-stat-val">82%</div><div className="hero-stat-lbl">Avg Score</div></div>
+              </div>
+            </div>
+            <div className="section-label animate-in delay-2">Available Exercises</div>
+            <div className="list-card-grid">
+              {['Memory Recall', 'Word Association', 'Face Recognition', 'Pattern Sequence', 'Story Recall', 'Number Sequences'].map((name, i) => (
+                <div key={i} className="list-card animate-in delay-2" onClick={() => alert(`Starting ${name}...`)}>
+                  <div className="list-card-icon" style={{ background: '#E6F5F0', color: '#0D9B76' }}><i className="fas fa-brain"></i></div>
+                  <div className="list-card-info"><div className="list-card-name">{name}</div><div className="list-card-desc">Cognitive exercise</div></div>
+                  <span className="list-card-arrow"><i className="fas fa-chevron-right"></i></span>
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -368,21 +369,9 @@ function App() {
                 </div>
               </div>
             ) : activeGame === 'memory' ? (
-              <MemoryMatchGame
-                userId={userId}
-                onGameEnd={() => {
-                  setActiveGame(null);
-                  fetchMedicines();
-                }}
-              />
+              <MemoryMatchGame userId={userId} onGameEnd={() => { setActiveGame(null); fetchMedicines(); }} />
             ) : (
-              <KichuKichuGame
-                userId={userId}
-                onGameEnd={() => {
-                  setActiveGame(null);
-                  fetchMedicines();
-                }}
-              />
+              <KichuKichuGame userId={userId} onGameEnd={() => { setActiveGame(null); fetchMedicines(); }} />
             )}
           </div>
         );
@@ -404,7 +393,7 @@ function App() {
                     <div className="med-info">
                       <span className="med-name">{med.name}</span>
                       <span className="med-dose">{med.dose}</span>
-                      <span className="med-time">{med.time}</span>
+                      <span className="med-time">{med.displayTime || med.time}</span>
                     </div>
                     <button
                       className={`med-toggle-btn ${med.taken ? 'taken-btn' : 'take-btn'}`}
@@ -474,26 +463,41 @@ function App() {
   // ── Main Render ──
   return (
     <div className="App">
+      {/* Background Atmosphere */}
+      <div className="bg-atmosphere">
+        <div className="bg-blob"></div>
+        <div className="bg-blob"></div>
+        <div className="bg-blob"></div>
+      </div>
+
+      {/* Navigation Bar */}
       <nav className="nav-bar">
-        <div className="nav-logo">🧠 Smriti-Setu</div>
+        <div className="nav-logo">
+          <span className="logo-icon"><i className="fas fa-house"></i></span>
+          Smriti-Setu
+        </div>
         <div className="nav-tabs">
           <button className={activeTab === 'home' ? 'active' : ''} onClick={() => { setActiveTab('home'); setActiveGame(null); }}>🏠 Home</button>
+          <button className={activeTab === 'exercise' ? 'active' : ''} onClick={() => setActiveTab('exercise')}>🧠 Exercise</button>
           <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { setActiveTab('game'); setActiveGame(null); }}>🎮 Game</button>
           <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => setActiveTab('medicine')}>💊 Medicine</button>
           <button className={activeTab === 'support' ? 'active' : ''} onClick={() => setActiveTab('support')}>🆘 Support</button>
         </div>
+        <div className="nav-right">
+          <button className="icon-btn" onClick={() => alert('Profile settings')}>
+            <i className="fas fa-user"></i>
+          </button>
+          <VoiceAssistant
+            userId={userId}
+            onAction={executeAction}
+            onReply={setVoiceReply}
+          />
+        </div>
       </nav>
 
+      {/* Main Content */}
       <div className="main-content">
         {renderContent()}
-      </div>
-
-      <div className="voice-assistant-footer">
-        <VoiceAssistant
-          userId={userId}
-          onAction={executeAction}
-          onReply={setVoiceReply}
-        />
       </div>
     </div>
   );
