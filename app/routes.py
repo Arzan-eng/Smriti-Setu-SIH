@@ -6,7 +6,7 @@ import os
 # ========== BLUEPRINT ==========
 main_bp = Blueprint('main', __name__)
 
-# ========== VOICE ASSISTANT MEMORY (NEW - Added by You) ==========
+# ========== VOICE ASSISTANT MEMORY ==========
 conversation_memory = {}  # Remembers what the user was just talking about
 
 # ========== HEALTH CHECK ==========
@@ -68,16 +68,13 @@ def get_progress(user_id):
     
     daily_scores = {}
     for session in sessions:
-        # ✅ SKIP scores that are None (empty)
         if session.score is None:
             continue
-        
         date_str = session.played_at.strftime('%Y-%m-%d')
         if date_str not in daily_scores:
             daily_scores[date_str] = []
         daily_scores[date_str].append(session.score)
     
-    # ✅ If all scores were None, return empty array
     if not daily_scores:
         return jsonify([]), 200
     
@@ -107,7 +104,6 @@ def get_user(user_id):
 # ========== SERVE THE GAME PAGE ==========
 @main_bp.route('/game', methods=['GET'])
 def serve_game():
-    # Absolute path to game.html inside the app folder
     game_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'game.html')
     return send_file(game_path)
 
@@ -157,14 +153,12 @@ def save_kichu_kichu():
     if not data:
         return jsonify({"status": "error", "message": "No data"}), 400
     
-    # Check if required fields exist
     if not all(k in data for k in ('user_id', 'score', 'time_taken', 'difficulty')):
         return jsonify({"status": "error", "message": "Missing fields"}), 400
     
-    # Save to database with a fixed game_id
     new_game = GameSession(
         user_id=data['user_id'],
-        game_id='kichu_kichu_tambulam',  # This is the new game name
+        game_id='kichu_kichu_tambulam',
         difficulty=data['difficulty'],
         score=data['score'],
         time_taken=data['time_taken']
@@ -176,12 +170,9 @@ def save_kichu_kichu():
 
 # ========== MEDICATION ROUTES ==========
 
-# 1. GET all medications for a user (today's schedule)
 @main_bp.route('/api/medication/<int:user_id>', methods=['GET'])
 def get_medications(user_id):
-    """Returns all medications for a user (not marked as taken today)"""
     meds = Medication.query.filter_by(user_id=user_id, is_taken=False).all()
-    
     result = []
     for med in meds:
         result.append({
@@ -192,53 +183,40 @@ def get_medications(user_id):
             "is_taken": med.is_taken,
             "alert_count": med.alert_count
         })
-    
     return jsonify(result), 200
 
-# 2. POST - Mark a medication as taken (user presses "I Took This")
 @main_bp.route('/api/medication/take', methods=['POST'])
 def mark_medication_taken():
     data = request.get_json()
-    
     if not data or 'medication_id' not in data:
         return jsonify({"status": "error", "message": "medication_id required"}), 400
-    
     med_id = data['medication_id']
     med = Medication.query.get(med_id)
-    
     if not med:
         return jsonify({"status": "error", "message": "Medication not found"}), 404
-    
-    # Mark as taken and reset alert count
     med.is_taken = True
     med.alert_count = 0
     db.session.commit()
-    
     return jsonify({
         "status": "success",
         "message": f"{med.medicine_name} marked as taken!",
         "medication_id": med.id
     }), 200
 
-# 3. POST - Add a new medication (for caregiver)
 @main_bp.route('/api/medication/add', methods=['POST'])
 def add_medication():
     data = request.get_json()
-    
     required = ['user_id', 'medicine_name', 'dosage', 'schedule_time']
     if not all(k in data for k in required):
         return jsonify({"status": "error", "message": "Missing fields"}), 400
-    
     new_med = Medication(
         user_id=data['user_id'],
         medicine_name=data['medicine_name'],
         dosage=data['dosage'],
         schedule_time=data['schedule_time']
     )
-    
     db.session.add(new_med)
     db.session.commit()
-    
     return jsonify({
         "status": "success",
         "message": f"{data['medicine_name']} added successfully!",
@@ -246,7 +224,7 @@ def add_medication():
     }), 200
 
 # ============================================================
-# 🗣️ NEW: VOICE ASSISTANT ENDPOINT (Added by You)
+# 🗣️ VOICE ASSISTANT ENDPOINT – UPDATED HIGHLIGHTS
 # ============================================================
 @main_bp.route('/api/assistant', methods=['POST'])
 def voice_assistant():
@@ -255,43 +233,30 @@ def voice_assistant():
     Frontend sends voice text -> We reply with TEXT + ACTION.
     """
     data = request.get_json()
-    user_id = data.get('user_id', 1)  # Default to user 1
+    user_id = data.get('user_id', 1)
     query = data.get('query', '').lower().strip()
     
-    # --- A. CHECK MEMORY (Are we in the middle of a conversation?) ---
+    # --- MEMORY CHECK ---
     if user_id in conversation_memory:
         context = conversation_memory[user_id]
         
-        # Case 1: We asked "Which medicine?" and they replied with a name
         if context.get('context') == 'waiting_for_medicine_name':
-            # Fetch pending meds using your existing Medication model
-            pending_meds = Medication.query.filter_by(
-                user_id=user_id, 
-                is_taken=False
-            ).all()
-            
+            pending_meds = Medication.query.filter_by(user_id=user_id, is_taken=False).all()
             for med in pending_meds:
                 if med.medicine_name.lower() in query:
-                    # Mark as taken (using your exact DB logic)
                     med.is_taken = True
                     med.alert_count = 0
                     db.session.commit()
-                    
-                    # Clear memory
                     conversation_memory[user_id] = {}
-                    
                     return jsonify({
                         "reply": f"Done! I marked {med.medicine_name} as taken.",
                         "action": {"type": "UPDATE_MEDICINE"}
                     })
-            
-            # If name not found
             return jsonify({
                 "reply": f"I didn't find '{query}' in your pending list. Please say the name again.",
                 "action": {"type": "IDLE"}
             })
         
-        # Case 2: We asked "Mark Aspirin?" and they said "Yes" or "No"
         if context.get('context') == 'waiting_for_confirmation':
             med_id = context.get('med_id')
             if 'yes' in query or 'ok' in query or 'হয়' in query:
@@ -300,7 +265,6 @@ def voice_assistant():
                     med.is_taken = True
                     med.alert_count = 0
                     db.session.commit()
-                
                 conversation_memory[user_id] = {}
                 return jsonify({
                     "reply": "Great! I marked it as taken for you.",
@@ -312,24 +276,21 @@ def voice_assistant():
                     "reply": "Okay, I cancelled that action.",
                     "action": {"type": "IDLE"}
                 })
-
-    # --- B. NEW CONVERSATION (Intent Detection) ---
     
-    # --- INTENT 1: MEDICINE (Mark or View) ---
+    # --- NEW INTENT DETECTION ---
+    
+    # INTENT 1: MEDICINE
     if 'medicine' in query or 'med' in query or 'pill' in query or 'ঔষধ' in query:
-        # Use your existing Medication model to fetch pending
         pending = Medication.query.filter_by(user_id=user_id, is_taken=False).all()
         
         if not pending:
             return jsonify({
                 "reply": "Great job! You have taken all your medicines today.",
-                "action": {"type": "NAVIGATE", "target": "medicine"}
+                "action": {"type": "NAVIGATE", "target": "medicine", "highlight": "medicine-section"}
             })
         
-        # If exactly 1 pending medicine
         if len(pending) == 1:
             med = pending[0]
-            # Remember we asked a Yes/No question
             conversation_memory[user_id] = {
                 'context': 'waiting_for_confirmation',
                 'med_id': med.id
@@ -338,11 +299,8 @@ def voice_assistant():
                 "reply": f"You have {med.medicine_name} pending. Should I mark it as taken?",
                 "action": {"type": "ASK_CONFIRMATION"}
             })
-        
-        # If multiple pending
         else:
             names = ", ".join([m.medicine_name for m in pending])
-            # Remember we asked "Which one?"
             conversation_memory[user_id] = {
                 'context': 'waiting_for_medicine_name'
             }
@@ -350,39 +308,40 @@ def voice_assistant():
                 "reply": f"You have {len(pending)} pending: {names}. Which one should I mark?",
                 "action": {"type": "IDLE"}
             })
-
-    # --- INTENT 2: GAME (Navigate to games) ---
+    
+    # INTENT 2: GAME
     if 'game' in query or 'play' in query or 'গেম' in query:
         return jsonify({
             "reply": "Taking you to the Games page. Try the Memory Match card!",
-            "action": {"type": "NAVIGATE", "target": "game", "highlight": "game-memory-card"}
+            "action": {"type": "NAVIGATE", "target": "game", "highlight": "memory-card"}   # <-- changed
         })
-
-    # --- INTENT 3: WHERE IS / NAVIGATION HELP ---
+    
+    # INTENT 3: WHERE IS / NAVIGATION HELP
     if 'where' in query or 'find' in query or 'ক' in query:
         if 'game' in query:
             return jsonify({
                 "reply": "Opening the Games page for you. Look for the yellow Memory Match card.",
-                "action": {"type": "NAVIGATE", "target": "game", "highlight": "game-memory-card"}
+                "action": {"type": "NAVIGATE", "target": "game", "highlight": "memory-card"}   # <-- changed
             })
         if 'medicine' in query or 'med' in query:
             return jsonify({
                 "reply": "Taking you to your Medicine page.",
-                "action": {"type": "NAVIGATE", "target": "medicine"}
+                "action": {"type": "NAVIGATE", "target": "medicine", "highlight": "medicine-section"}   # <-- added highlight
             })
-
-    # --- INTENT 4: SOS / HELP ---
+    
+    # INTENT 4: SOS / HELP
     if 'sos' in query or 'help' in query or 'emergency' in query or 'সাহায্য' in query:
         return jsonify({
             "reply": "Opening the emergency contact section immediately.",
-            "action": {"type": "OPEN_SOS"}
+            "action": {"type": "OPEN_SOS", "highlight": "emergency-box"}   # <-- added highlight
         })
-
-    # --- FALLBACK: I don't understand ---
+    
+    # FALLBACK
     return jsonify({
         "reply": "I didn't quite catch that. You can say 'Medicine', 'Game', or 'Help'.",
         "action": {"type": "IDLE"}
     })
+
 # ========== TEST ROUTE ==========
 @main_bp.route('/api/ping', methods=['GET'])
 def ping():
