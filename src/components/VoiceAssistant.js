@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 
 const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
 
   const sendToBackend = async (query) => {
     try {
@@ -13,12 +12,8 @@ const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
         body: JSON.stringify({ user_id: userId, query })
       });
       const data = await res.json();
-      if (data.reply) {
-        onReply(data.reply);
-      }
-      if (data.action && onAction) {
-        onAction(data.action);
-      }
+      if (data.reply) onReply(data.reply);
+      if (data.action && onAction) onAction(data.action);
     } catch (error) {
       console.error('Voice assistant error:', error);
       onReply('Sorry, I could not reach the server.');
@@ -27,10 +22,9 @@ const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Your browser does not support speech recognition.');
+      alert('Speech recognition not supported.');
       return;
     }
-
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
@@ -42,22 +36,15 @@ const VoiceAssistant = ({ userId = 1, onAction, onReply }) => {
 
     recognition.onresult = (event) => {
       const spokenText = event.results[0][0].transcript;
-      setTranscript(spokenText);
       sendToBackend(spokenText);
       setIsListening(false);
     };
-
     recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
+      console.error('Speech error:', event.error);
       setIsListening(false);
-      if (event.error === 'not-allowed') {
-        alert('Please allow microphone access.');
-      }
+      if (event.error === 'not-allowed') alert('Please allow microphone access.');
     };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+    recognition.onend = () => setIsListening(false);
   };
 
   return (
