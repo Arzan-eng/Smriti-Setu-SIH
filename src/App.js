@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import VoiceAssistant from './components/VoiceAssistant';
 import MemoryMatchGame from './MemoryMatchGame';
-import KichuKichuGame from './KichuKichuGame';
+import KichuKichuGame from './KichuKichuGame'; 
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
