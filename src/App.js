@@ -43,7 +43,7 @@ function App() {
       setMeds(mapped);
     } catch (error) {
       console.error('Error fetching medicines:', error);
-      // Fallback hardcoded data (matching the NER design)
+      // Fallback hardcoded data
       setMeds([
         { id: 1, name: 'Donepezil 10mg', dose: '1 tablet', time: 'Morning', displayTime: '8:00 AM', taken: true, streak: '12d' },
         { id: 2, name: 'Vitamin B12 500mcg', dose: '1 capsule', time: 'Morning', displayTime: '8:00 AM', taken: true },
@@ -428,6 +428,20 @@ function App() {
             <div className="hero-banner amber animate-in delay-1">
               <h2>24/7 Assistance</h2>
               <p>Help is always just a click away</p>
+              <div className="hero-stats">
+                <div className="hero-stat-item">
+                  <div className="hero-stat-val">24/7</div>
+                  <div className="hero-stat-lbl">Available</div>
+                </div>
+                <div className="hero-stat-item">
+                  <div className="hero-stat-val">100%</div>
+                  <div className="hero-stat-lbl">Confidential</div>
+                </div>
+                <div className="hero-stat-item">
+                  <div className="hero-stat-val">Free</div>
+                  <div className="hero-stat-lbl">Support</div>
+                </div>
+              </div>
             </div>
 
             <div className="section-label animate-in delay-2">Contact & Resources</div>
@@ -438,10 +452,10 @@ function App() {
                   <i className="fas fa-phone"></i>
                 </div>
                 <div className="support-opt-info">
-                  <div className="support-opt-name">Helpline</div>
-                  <div className="support-opt-desc">1800-XXX-XXXX — 24/7</div>
+                  <div className="support-opt-name">📞 Helpline</div>
+                  <div className="support-opt-desc">1800-XXX-XXXX — Available 24/7</div>
                 </div>
-                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
               </div>
 
               <div className="support-option animate-in delay-2" onClick={() => alert('Opening live chat...')}>
@@ -449,10 +463,10 @@ function App() {
                   <i className="fas fa-comments"></i>
                 </div>
                 <div className="support-opt-info">
-                  <div className="support-opt-name">Live Chat</div>
+                  <div className="support-opt-name">💬 Live Chat</div>
                   <div className="support-opt-desc">Chat with a care specialist</div>
                 </div>
-                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
               </div>
 
               <div className="support-option animate-in delay-3" onClick={() => alert('Opening FAQ...')}>
@@ -460,10 +474,10 @@ function App() {
                   <i className="fas fa-circle-question"></i>
                 </div>
                 <div className="support-opt-info">
-                  <div className="support-opt-name">FAQ & Guides</div>
+                  <div className="support-opt-name">❓ FAQ & Guides</div>
                   <div className="support-opt-desc">Common questions answered</div>
                 </div>
-                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
               </div>
 
               <div className="support-option animate-in delay-3" onClick={() => alert('Scheduling callback...')}>
@@ -471,10 +485,10 @@ function App() {
                   <i className="fas fa-calendar-check"></i>
                 </div>
                 <div className="support-opt-info">
-                  <div className="support-opt-name">Schedule Callback</div>
+                  <div className="support-opt-name">📅 Schedule Callback</div>
                   <div className="support-opt-desc">Request a call at your convenience</div>
                 </div>
-                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
               </div>
 
               <div className="support-option animate-in delay-4" onClick={() => alert('Opening community...')}>
@@ -482,10 +496,10 @@ function App() {
                   <i className="fas fa-users"></i>
                 </div>
                 <div className="support-opt-info">
-                  <div className="support-opt-name">Community Forum</div>
-                  <div className="support-opt-desc">Connect with others</div>
+                  <div className="support-opt-name">👥 Community Forum</div>
+                  <div className="support-opt-desc">Connect with others on the same journey</div>
                 </div>
-                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
               </div>
 
               <div className="support-option animate-in delay-4" onClick={() => alert('Opening resources...')}>
@@ -493,14 +507,15 @@ function App() {
                   <i className="fas fa-book-medical"></i>
                 </div>
                 <div className="support-opt-info">
-                  <div className="support-opt-name">Educational Resources</div>
+                  <div className="support-opt-name">📚 Educational Resources</div>
                   <div className="support-opt-desc">Articles and videos about memory care</div>
                 </div>
-                <span style={{ color: '#8E8A82' }}><i className="fas fa-chevron-right"></i></span>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
               </div>
             </div>
 
             <div className="emergency-box animate-in delay-5" id="emergency-box">
+              <div className="emergency-icon"><i className="fas fa-triangle-exclamation"></i></div>
               <div className="em-title">🚨 Emergency?</div>
               <div className="em-desc">Call 911 or your local emergency number immediately</div>
               <button className="emergency-call-btn" onClick={() => alert('Calling emergency...')}>
