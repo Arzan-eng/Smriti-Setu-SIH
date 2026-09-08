@@ -18,32 +18,32 @@ function App() {
       const res = await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/1');
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
-      const mapped = data.map(med => ({
-        id: med.id,
-        name: med.medicine_name,
-        dose: med.dosage || '1 tablet',
-        time: med.schedule_time,
-        taken: med.is_taken,
-        streak: null,
-      }));
-      const withTimeLabel = mapped.map(med => {
+      const mapped = data.map(med => {
         let timeLabel = 'Morning';
         let displayTime = '';
-        if (med.time) {
-          const hour = parseInt(med.time.split(':')[0]);
-          const mins = med.time.split(':')[1];
+        if (med.schedule_time) {
+          const hour = parseInt(med.schedule_time.split(':')[0]);
+          const mins = med.schedule_time.split(':')[1];
           if (hour >= 12 && hour < 17) timeLabel = 'Afternoon';
           else if (hour >= 17) timeLabel = 'Evening';
-          // Format time for display (e.g., "2:00 PM")
           const h = hour > 12 ? hour - 12 : hour;
           const ampm = hour >= 12 ? 'PM' : 'AM';
           displayTime = `${h}:${mins} ${ampm}`;
         }
-        return { ...med, time: timeLabel, displayTime };
+        return {
+          id: med.id,
+          name: med.medicine_name,
+          dose: med.dosage || '1 tablet',
+          time: timeLabel,
+          displayTime: displayTime,
+          taken: med.is_taken,
+          streak: null,
+        };
       });
-      setMeds(withTimeLabel);
+      setMeds(mapped);
     } catch (error) {
       console.error('Error fetching medicines:', error);
+      // Fallback hardcoded data (matching the NER design)
       setMeds([
         { id: 1, name: 'Donepezil 10mg', dose: '1 tablet', time: 'Morning', displayTime: '8:00 AM', taken: true, streak: '12d' },
         { id: 2, name: 'Vitamin B12 500mcg', dose: '1 capsule', time: 'Morning', displayTime: '8:00 AM', taken: true },
@@ -84,61 +84,41 @@ function App() {
   // ── Voice Assistant Action Handler ──
   const executeAction = (action) => {
     if (!action) return;
-    console.log('Executing action:', action);
     switch (action.type) {
       case 'NAVIGATE':
         if (action.target) {
           setActiveTab(action.target);
-          if (action.target === 'game' && action.game) {
-            setActiveGame(action.game);
-          } else if (action.target === 'game') {
-            setActiveGame(null);
-          }
+          if (action.target === 'game' && action.game) setActiveGame(action.game);
+          else if (action.target === 'game') setActiveGame(null);
         }
-        if (action.highlight) {
-          flashElement(action.highlight);
-        }
+        if (action.highlight) flashElement(action.highlight);
         break;
       case 'UPDATE_MEDICINE':
         fetchMedicines();
         flashElement('medicine-section');
         break;
       case 'ASK_CONFIRMATION':
-        const confirmed = window.confirm(action.message || 'Do you want to mark this medicine as taken?');
-        if (confirmed && action.medicationId) {
-          fetch('https://smriti-setu-sih-1.onrender.com/api/medication/take', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ medication_id: action.medicationId })
-          })
-            .then(() => fetchMedicines())
-            .catch(err => console.error(err));
+        if (window.confirm(action.message || 'Mark this medicine as taken?')) {
+          const pending = meds.find(m => !m.taken);
+          if (pending) toggleMed(pending.id);
+          else alert('All medicines taken!');
         }
         break;
       case 'OPEN_SOS':
         setActiveTab('support');
-        if (action.highlight) {
-          setTimeout(() => flashElement(action.highlight), 300);
-        }
+        if (action.highlight) setTimeout(() => flashElement(action.highlight), 300);
         break;
-      default:
-        break;
+      default: break;
     }
   };
 
-  // ── Flash Highlight ──
   const flashElement = (id) => {
     const el = document.getElementById(id);
-    if (!el) {
-      console.warn(`Element with id "${id}" not found`);
-      return;
-    }
+    if (!el) return;
     el.classList.remove('flash-highlight');
     void el.offsetWidth;
     el.classList.add('flash-highlight');
-    setTimeout(() => {
-      el.classList.remove('flash-highlight');
-    }, 3000);
+    setTimeout(() => el.classList.remove('flash-highlight'), 3000);
   };
 
   // ── Helpers ──
@@ -148,27 +128,21 @@ function App() {
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
   };
-
   const getDateStr = (offset) => {
     const d = new Date();
     d.setDate(d.getDate() + offset);
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return `${months[d.getMonth()]} ${d.getDate()}`;
   };
-
   const getTakenCount = () => meds.filter(m => m.taken).length;
   const getTotalCount = () => meds.length;
 
-  // ── Weekly Report ──
   const generateWeeklyReport = async () => {
     try {
       const res = await fetch('https://smriti-setu-sih-1.onrender.com/api/progress/1');
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
-      if (data.length === 0) {
-        alert('📊 No game data yet. Play some games!');
-        return;
-      }
+      if (data.length === 0) { alert('📊 No game data yet. Play some games!'); return; }
       const avg = data.reduce((sum, d) => sum + d.avg_score, 0) / data.length;
       alert(`📊 Weekly Avg: ${Math.round(avg)}% across ${data.length} days`);
     } catch (error) {
@@ -188,7 +162,6 @@ function App() {
             </header>
 
             <div className="home-grid">
-              {/* LEFT COLUMN */}
               <div className="col-left">
                 <div className="section-label animate-in delay-1">Daily Exercise Scores</div>
                 <div className="exercise-card animate-in delay-1">
@@ -262,7 +235,6 @@ function App() {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN */}
               <div className="col-right">
                 <div className="section-label animate-in delay-1">Daily Medicine Check</div>
                 <div className="medicine-card animate-in delay-1" id="medicine-section">
@@ -270,43 +242,32 @@ function App() {
                     <span className="card-title">Today's Medications</span>
                     <span className="card-date">{getDateStr(0)}</span>
                   </div>
-
                   {meds.length === 0 ? (
-                    <p style={{ color: '#8E8A82', textAlign: 'center', padding: '20px' }}>
-                      No medications scheduled
-                    </p>
+                    <p style={{ color: '#8E8A82', textAlign: 'center', padding: '20px' }}>No medications scheduled</p>
                   ) : (
-                    <>
-                      {['Morning', 'Afternoon', 'Evening'].map(timeSlot => {
-                        const items = meds.filter(m => m.time === timeSlot);
-                        if (items.length === 0) return null;
-                        const icons = {
-                          Morning: <i className="fas fa-sun" style={{ color: '#D4A017' }}></i>,
-                          Afternoon: <i className="fas fa-cloud-sun" style={{ color: '#E8734A' }}></i>,
-                          Evening: <i className="fas fa-moon" style={{ color: '#7C3AED' }}></i>
-                        };
-                        return (
-                          <div className="med-time-group" key={timeSlot}>
-                            <div className="med-time-label">
-                              {icons[timeSlot]} {timeSlot}
+                    ['Morning', 'Afternoon', 'Evening'].map(slot => {
+                      const items = meds.filter(m => m.time === slot);
+                      if (items.length === 0) return null;
+                      const icons = {
+                        Morning: <i className="fas fa-sun" style={{ color: '#D4A017' }}></i>,
+                        Afternoon: <i className="fas fa-cloud-sun" style={{ color: '#E8734A' }}></i>,
+                        Evening: <i className="fas fa-moon" style={{ color: '#7C3AED' }}></i>
+                      };
+                      return (
+                        <div className="med-time-group" key={slot}>
+                          <div className="med-time-label">{icons[slot]} {slot}</div>
+                          {items.map(med => (
+                            <div key={med.id} className={`med-item ${med.taken ? 'completed' : ''}`} onClick={() => toggleMed(med.id)}>
+                              <div className="med-check"><i className="fas fa-check"></i></div>
+                              <span className="med-name">{med.name}</span>
+                              <span className="med-dose">{med.dose}</span>
+                              {med.displayTime && <span className="med-time" style={{fontSize:'12px', color:'#8E8A82'}}>{med.displayTime}</span>}
+                              {med.streak && <span className="med-streak"><i className="fas fa-fire"></i> {med.streak}</span>}
                             </div>
-                            {items.map(med => (
-                              <div 
-                                key={med.id} 
-                                className={`med-item ${med.taken ? 'completed' : ''}`}
-                                onClick={() => toggleMed(med.id)}
-                              >
-                                <div className="med-check"><i className="fas fa-check"></i></div>
-                                <span className="med-name">{med.name}</span>
-                                <span className="med-dose">{med.dose}</span>
-                                {med.displayTime && <span className="med-time">{med.displayTime}</span>}
-                                {med.streak && <span className="med-streak"><i className="fas fa-fire"></i> {med.streak}</span>}
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </>
+                          ))}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -348,13 +309,8 @@ function App() {
           <div className="game-tab-content">
             <div className="game-header-bar">
               <h2>🎮 Games</h2>
-              {activeGame && (
-                <button className="back-btn" onClick={() => setActiveGame(null)}>
-                  ← Back to Games
-                </button>
-              )}
+              {activeGame && <button className="back-btn" onClick={() => setActiveGame(null)}>← Back</button>}
             </div>
-
             {!activeGame ? (
               <div className="game-selector-grid">
                 <div className="game-card" id="memory-card" onClick={() => setActiveGame('memory')}>
@@ -410,12 +366,12 @@ function App() {
               <h4>➕ Add New Medicine (Caregiver)</h4>
               <form onSubmit={async (e) => {
                 e.preventDefault();
-                const formData = new FormData(e.target);
+                const fd = new FormData(e.target);
                 const payload = {
                   user_id: userId,
-                  medicine_name: formData.get('name'),
-                  dosage: formData.get('dose'),
-                  schedule_time: formData.get('time')
+                  medicine_name: fd.get('name'),
+                  dosage: fd.get('dose'),
+                  schedule_time: fd.get('time')
                 };
                 try {
                   await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/add', {
@@ -425,9 +381,7 @@ function App() {
                   });
                   fetchMedicines();
                   e.target.reset();
-                } catch (err) {
-                  console.error('Failed to add medicine:', err);
-                }
+                } catch (err) { console.error(err); }
               }}>
                 <input name="name" placeholder="Medicine name" required />
                 <input name="dose" placeholder="Dosage (e.g. 1 tablet)" required />
@@ -455,22 +409,19 @@ function App() {
           </div>
         );
 
-      default:
-        return <div>Unknown tab</div>;
+      default: return <div>Unknown tab</div>;
     }
   };
 
   // ── Main Render ──
   return (
     <div className="App">
-      {/* Background Atmosphere */}
       <div className="bg-atmosphere">
         <div className="bg-blob"></div>
         <div className="bg-blob"></div>
         <div className="bg-blob"></div>
       </div>
 
-      {/* Navigation Bar */}
       <nav className="nav-bar">
         <div className="nav-logo">
           <span className="logo-icon"><i className="fas fa-house"></i></span>
@@ -484,21 +435,12 @@ function App() {
           <button className={activeTab === 'support' ? 'active' : ''} onClick={() => setActiveTab('support')}>🆘 Support</button>
         </div>
         <div className="nav-right">
-          <button className="icon-btn" onClick={() => alert('Profile settings')}>
-            <i className="fas fa-user"></i>
-          </button>
-          <VoiceAssistant
-            userId={userId}
-            onAction={executeAction}
-            onReply={setVoiceReply}
-          />
+          <button className="icon-btn" onClick={() => alert('Profile')}><i className="fas fa-user"></i></button>
+          <VoiceAssistant userId={userId} onAction={executeAction} onReply={setVoiceReply} />
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="main-content">
-        {renderContent()}
-      </div>
+      <div className="main-content">{renderContent()}</div>
     </div>
   );
 }
