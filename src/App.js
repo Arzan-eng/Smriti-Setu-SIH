@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import VoiceAssistant from './components/VoiceAssistant';
 import MemoryMatchGame from './MemoryMatchGame';
-import KichuKichuGame from './KichuKichuGame'; 
+import KichuKichuGame from './KichuKichuGame';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -41,10 +41,10 @@ function App() {
       // Fallback hardcoded data
       setMeds([
         { id: 1, name: 'Donepezil 10mg', dose: '1 tablet', time: 'Morning', taken: true, streak: '12d' },
-        { id: 2, name: 'Vitamin B12', dose: '500mcg', time: 'Morning', taken: true },
+        { id: 2, name: 'Vitamin B12 500mcg', dose: '1 capsule', time: 'Morning', taken: true },
         { id: 3, name: 'Memantine 5mg', dose: '1 tablet', time: 'Afternoon', taken: false },
         { id: 4, name: 'Melatonin 3mg', dose: '1 tablet', time: 'Evening', taken: false },
-        { id: 5, name: 'Omega-3', dose: '1000mg', time: 'Evening', taken: false },
+        { id: 5, name: 'Omega-3 1000mg', dose: '1 softgel', time: 'Evening', taken: false },
       ]);
     }
   };
@@ -91,7 +91,6 @@ function App() {
       case 'NAVIGATE':
         if (action.target) {
           setActiveTab(action.target);
-          // If navigating to game and specific game is requested
           if (action.target === 'game' && action.game) {
             setActiveGame(action.game);
           } else if (action.target === 'game') {
@@ -109,10 +108,8 @@ function App() {
         break;
 
       case 'ASK_CONFIRMATION':
-        // Show a confirm dialog
         const confirmed = window.confirm(action.message || 'Do you want to mark this medicine as taken?');
         if (confirmed && action.medicationId) {
-          // Call the take endpoint
           fetch('https://smriti-setu-sih-1.onrender.com/api/medication/take', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -132,7 +129,6 @@ function App() {
 
       case 'IDLE':
       default:
-        // Do nothing, just show the reply
         break;
     }
   };
@@ -145,7 +141,6 @@ function App() {
       return;
     }
     el.classList.remove('flash-highlight');
-    // Force reflow
     void el.offsetWidth;
     el.classList.add('flash-highlight');
     setTimeout(() => {
