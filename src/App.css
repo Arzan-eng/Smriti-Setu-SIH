@@ -508,3 +508,167 @@ body {
 .list-card-name { font-size:14px; font-weight:700; }
 .list-card-desc { font-size:12px; color:#8E8A82; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .list-card-arrow { color:#8E8A82; font-size:13px; flex-shrink:0; }
+/* Medicine tab enhancements */
+.hero-banner .hero-progress-fill {
+  background: #3fd7b6;
+}
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #E8E4DF;
+}
+.med-card-full {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 16px rgba(26,26,26,0.06);
+  border: 1px solid #E8E4DF;
+  margin-bottom: 12px;
+}
+.med-card-full .time-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #E8E4DF;
+}
+.time-header i { font-size: 15px; }
+.time-header span { font-size: 14px; font-weight: 700; }
+.time-header .time-status {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+}
+.time-header .time-status.done { color: #0D9B76; }
+.time-header .time-status.pending { color: #E8734A; }
+
+.pill-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F7F5F2;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.pill-item:last-child { border-bottom: none; }
+.pill-item:hover { padding-left: 4px; }
+.pill-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid #E8E4DF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: transparent;
+  transition: 0.3s;
+  flex-shrink: 0;
+}
+.pill-item.taken .pill-check {
+  background: #0D9B76;
+  border-color: #0D9B76;
+  color: #fff;
+}
+.pill-item.taken .pill-name {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.pill-name { font-size: 14px; font-weight: 600; flex: 1; }
+.pill-dosage { font-size: 12px; color: #8E8A82; }
+.pill-time {
+  font-size: 12px;
+  color: #8E8A82;
+  background: #F7F5F2;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* Support tab enhancements */
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.support-option {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 16px rgba(26,26,26,0.06);
+  border: 1px solid #E8E4DF;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+.support-option:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(26,26,26,0.10);
+}
+.support-option:active { transform: scale(0.97); }
+.support-opt-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.support-opt-info { flex: 1; min-width: 0; }
+.support-opt-name { font-size: 14px; font-weight: 700; }
+.support-opt-desc { font-size: 12px; color: #8E8A82; margin-top: 2px; }
+
+.emergency-box {
+  margin-top: 20px;
+  padding: 24px;
+  background: #FEF2F2;
+  border-radius: 16px;
+  border: 2px solid #FCA5A5;
+  text-align: center;
+}
+.emergency-box .em-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #DC2626;
+}
+.emergency-box .em-desc {
+  font-size: 14px;
+  color: #8E8A82;
+  margin-top: 4px;
+}
+.emergency-call-btn {
+  margin-top: 16px;
+  padding: 12px 32px;
+  background: #DC2626;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.emergency-call-btn:hover { background: #B91C1C; transform: scale(1.02); }
+.emergency-call-btn:active { transform: scale(0.97); }
+
+/* Progress bar inside hero banner */
+.hero-banner .hero-progress-bar {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+.hero-banner .hero-progress-fill {
+  height: 100%;
+  background: #3fd7b6;
+  border-radius: 8px;
+  transition: width 0.8s ease;
+}
