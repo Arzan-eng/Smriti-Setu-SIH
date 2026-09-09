@@ -2,21 +2,22 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from app.routes import main_bp
-from app.auth_routes import auth_bp   # <-- new import
+from app.auth_routes import auth_bp   # <-- make sure this import exists
 from app.models import db
 import os
 from datetime import timedelta
 
 app = Flask(__name__)
 
-# ── Secret key and session config ──
+# ── Secret key & session config ──
 app.secret_key = 'your-super-secret-key-change-this-in-production'
 app.permanent_session_lifetime = timedelta(days=7)
 
-# ── CORS (allow all origins for development) ──
-CORS(app, 
+# ── CORS with credentials support ──
+CORS(app,
      resources={r"/*": {"origins": "*"}},
-     supports_credentials=True  # required for sessions
+     supports_credentials=True,                # <-- CRITICAL
+     allow_headers=["Content-Type", "Authorization"]
 )
 
 # ── Instance folder ──
@@ -36,8 +37,8 @@ with app.app_context():
     print("✅ Database tables created")
 
 # ── Register both blueprints ──
-app.register_blueprint(main_bp)   # your existing routes
-app.register_blueprint(auth_bp)   # new auth routes
+app.register_blueprint(main_bp)      # your existing routes
+app.register_blueprint(auth_bp)      # auth routes (make sure this exists)
 
 # ── Test routes ──
 @app.route('/ping')
