@@ -580,6 +580,61 @@ function App() {
                 <i className="fas fa-phone"></i> Call Emergency
               </button>
             </div>
+
+            {/* ── 🆕 QR Code Share Section ── */}
+            <div className="qr-share-section animate-in delay-5" style={{
+              marginTop: '24px',
+              padding: '24px',
+              background: '#fff',
+              borderRadius: '16px',
+              border: '1px solid #E8E4DF',
+              textAlign: 'center',
+              boxShadow: '0 2px 16px rgba(26,26,26,0.06)'
+            }}>
+              <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>📱 Share Smriti-Setu</h3>
+              <p style={{ color: '#8E8A82', fontSize: '14px', marginBottom: '16px' }}>
+                Scan to download the app
+              </p>
+
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://smriti-setu-sih.vercel.app/"
+                alt="QR Code to Smriti-Setu"
+                style={{
+                  maxWidth: '200px',
+                  height: 'auto',
+                  margin: '0 auto',
+                  display: 'block',
+                  borderRadius: '12px',
+                  border: '2px solid #E8E4DF'
+                }}
+              />
+
+              <p style={{ marginTop: '12px', fontSize: '13px', color: '#8E8A82', wordBreak: 'break-all' }}>
+                or visit: <br />
+                <strong style={{ color: '#0D9B76' }}>smriti-setu-sih.vercel.app</strong>
+              </p>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('https://smriti-setu-sih.vercel.app/')
+                    .then(() => alert('✅ Link copied to clipboard!'))
+                    .catch(() => alert('❌ Failed to copy. Please copy manually.'));
+                }}
+                style={{
+                  marginTop: '12px',
+                  padding: '10px 24px',
+                  background: '#0D9B76',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                <i className="fas fa-copy"></i> Copy Link
+              </button>
+            </div>
           </div>
         );
 
