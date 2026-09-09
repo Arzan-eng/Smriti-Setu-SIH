@@ -182,6 +182,38 @@ function App() {
     }
   };
 
+  // ── 🆕 SOS with GPS ──
+  const handleSOS = () => {
+    if (navigator.geolocation) {
+      alert('📍 Getting your location...');
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+          const confirmMsg = `🚨 EMERGENCY!\n\nSend this location to your caregiver:\n📍 ${mapsLink}\n\n📞 Call caregiver now?`;
+          if (window.confirm(confirmMsg)) {
+            window.open('tel:1234567890'); // Replace with actual caregiver number
+          }
+        },
+        (error) => {
+          console.error('GPS Error:', error);
+          alert('⚠️ Could not get your location. Please call your caregiver immediately.\n\n📞 1800-XXX-XXXX');
+          window.open('tel:1800XXX');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      alert('❌ GPS not supported. Please call your caregiver immediately.\n\n📞 1800-XXX-XXXX');
+      window.open('tel:1800XXX');
+    }
+  };
+
   // ── Auth handlers ──
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -576,7 +608,7 @@ function App() {
               <div className="emergency-icon"><i className="fas fa-triangle-exclamation"></i></div>
               <div className="em-title">🚨 Emergency?</div>
               <div className="em-desc">Call 911 or your local emergency number immediately</div>
-              <button className="emergency-call-btn" onClick={() => alert('Calling emergency...')}>
+              <button className="emergency-call-btn" onClick={handleSOS}>
                 <i className="fas fa-phone"></i> Call Emergency
               </button>
             </div>
