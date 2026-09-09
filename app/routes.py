@@ -1,47 +1,50 @@
-from flask import Blueprint, jsonify, request, send_file
+# app/routes.py
+from flask import Blueprint, jsonify, request, send_file, session
 from app.models import User, GameSession, Medication, db
 from datetime import datetime, timedelta
 import os
 
-# ========== BLUEPRINT ==========
 main_bp = Blueprint('main', __name__)
 
 # ========== VOICE ASSISTANT MEMORY ==========
-conversation_memory = {}  # Remembers what the user was just talking about
+conversation_memory = {}
+
+# ========== HELPER: Get logged-in user ==========
+def get_current_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return None
+    return User.query.get(user_id)
 
 # ========== HEALTH CHECK ==========
 @main_bp.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "success", "message": "Backend is running perfectly!"})
 
-# ========== USER REGISTRATION ==========
+# ========== USER REGISTRATION (Deprecated – use /api/auth/register) ==========
 @main_bp.route('/api/register', methods=['POST'])
 def register_user():
-    data = request.get_json()
-    
-    new_user = User(
-        name=data.get('name'),
-        language=data.get('language', 'as')
-    )
-    
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return jsonify({
-        "status": "success",
-        "message": f"User {new_user.name} created!",
-        "user_id": new_user.id
-    }), 201
+    # Keep for backward compatibility, but redirect to auth route
+    return jsonify({"error": "Use /api/auth/register"}), 400
 
 # ========== SAVE GAME SCORE ==========
 @main_bp.route('/api/save_game', methods=['POST'])
 def save_game():
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
     
+    # Validate the sent user_id matches the logged-in user
+    if data.get('user_id') != current_user.id:
+        return jsonify({"error": "Forbidden"}), 403
+
     new_game = GameSession(
-        user_id=data['user_id'],
-        game_id=data['game_id'],
+        user_id=current_user.id,  # Always use session user ID
+        game_id=data.get('game_id'),
         difficulty=data.get('difficulty', 'Easy'),
+        score=data.get('score'),
         time_taken=data.get('time_taken', 0)
     )
     
@@ -57,6 +60,12 @@ def save_game():
 # ========== REAL PROGRESS DASHBOARD ==========
 @main_bp.route('/api/progress/<int:user_id>', methods=['GET'])
 def get_progress(user_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if current_user.id != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+
     week_ago = datetime.utcnow() - timedelta(days=7)
     sessions = GameSession.query.filter(
         GameSession.user_id == user_id,
@@ -89,9 +98,15 @@ def get_progress(user_id):
     result.sort(key=lambda x: x['date'])
     return jsonify(result), 200
 
-# ========== GET USER BY ID ==========
+# ========== GET USER BY ID (For display) ==========
 @main_bp.route('/api/user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if current_user.id != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -110,6 +125,12 @@ def serve_game():
 # ========== AI: RECOMMEND DIFFICULTY ==========
 @main_bp.route('/api/recommend_difficulty/<int:user_id>', methods=['GET'])
 def recommend_difficulty(user_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if current_user.id != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+
     week_ago = datetime.utcnow() - timedelta(days=7)
     sessions = GameSession.query.filter(
         GameSession.user_id == user_id,
@@ -149,15 +170,22 @@ def recommend_difficulty(user_id):
 # ========== NEW GAME: Kichu Kichu Tambulam ==========
 @main_bp.route('/api/save_kichu_kichu', methods=['POST'])
 def save_kichu_kichu():
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "No data"}), 400
+
+    if data.get('user_id') != current_user.id:
+        return jsonify({"error": "Forbidden"}), 403
     
-    if not all(k in data for k in ('user_id', 'score', 'time_taken', 'difficulty')):
+    if not all(k in data for k in ('score', 'time_taken', 'difficulty')):
         return jsonify({"status": "error", "message": "Missing fields"}), 400
     
     new_game = GameSession(
-        user_id=data['user_id'],
+        user_id=current_user.id,
         game_id='kichu_kichu_tambulam',
         difficulty=data['difficulty'],
         score=data['score'],
@@ -172,6 +200,12 @@ def save_kichu_kichu():
 
 @main_bp.route('/api/medication/<int:user_id>', methods=['GET'])
 def get_medications(user_id):
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+    if current_user.id != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+
     meds = Medication.query.filter_by(user_id=user_id, is_taken=False).all()
     result = []
     for med in meds:
@@ -187,16 +221,28 @@ def get_medications(user_id):
 
 @main_bp.route('/api/medication/take', methods=['POST'])
 def mark_medication_taken():
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
     if not data or 'medication_id' not in data:
         return jsonify({"status": "error", "message": "medication_id required"}), 400
+    
     med_id = data['medication_id']
     med = Medication.query.get(med_id)
+    
     if not med:
         return jsonify({"status": "error", "message": "Medication not found"}), 404
+    
+    # Ensure the medication belongs to the logged-in user
+    if med.user_id != current_user.id:
+        return jsonify({"error": "Forbidden"}), 403
+    
     med.is_taken = True
     med.alert_count = 0
     db.session.commit()
+    
     return jsonify({
         "status": "success",
         "message": f"{med.medicine_name} marked as taken!",
@@ -205,18 +251,25 @@ def mark_medication_taken():
 
 @main_bp.route('/api/medication/add', methods=['POST'])
 def add_medication():
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"error": "Unauthorized"}), 401
+
     data = request.get_json()
-    required = ['user_id', 'medicine_name', 'dosage', 'schedule_time']
+    required = ['medicine_name', 'dosage', 'schedule_time']
     if not all(k in data for k in required):
         return jsonify({"status": "error", "message": "Missing fields"}), 400
+    
+    # Use the session user_id, ignore what frontend sends
     new_med = Medication(
-        user_id=data['user_id'],
+        user_id=current_user.id,
         medicine_name=data['medicine_name'],
         dosage=data['dosage'],
         schedule_time=data['schedule_time']
     )
     db.session.add(new_med)
     db.session.commit()
+    
     return jsonify({
         "status": "success",
         "message": f"{data['medicine_name']} added successfully!",
@@ -224,16 +277,21 @@ def add_medication():
     }), 200
 
 # ============================================================
-# 🗣️ VOICE ASSISTANT ENDPOINT – UPDATED HIGHLIGHTS
+# 🗣️ VOICE ASSISTANT ENDPOINT
 # ============================================================
 @main_bp.route('/api/assistant', methods=['POST'])
 def voice_assistant():
-    """
-    This is the BRAIN of your voice assistant.
-    Frontend sends voice text -> We reply with TEXT + ACTION.
-    """
     data = request.get_json()
     user_id = data.get('user_id', 1)
+    
+    # Verify the user exists and is logged in (optional but recommended)
+    current_user = get_current_user()
+    if current_user and current_user.id != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+    if not current_user:
+        # If no session, fallback to provided user_id (for compatibility)
+        pass
+
     query = data.get('query', '').lower().strip()
     
     # --- MEMORY CHECK ---
@@ -277,33 +335,24 @@ def voice_assistant():
                     "action": {"type": "IDLE"}
                 })
     
-    # --- NEW INTENT DETECTION ---
-    
-    # INTENT 1: MEDICINE
+    # --- INTENT 1: MEDICINE ---
     if 'medicine' in query or 'med' in query or 'pill' in query or 'ঔষধ' in query:
         pending = Medication.query.filter_by(user_id=user_id, is_taken=False).all()
-        
         if not pending:
             return jsonify({
                 "reply": "Great job! You have taken all your medicines today.",
                 "action": {"type": "NAVIGATE", "target": "medicine", "highlight": "medicine-section"}
             })
-        
         if len(pending) == 1:
             med = pending[0]
-            conversation_memory[user_id] = {
-                'context': 'waiting_for_confirmation',
-                'med_id': med.id
-            }
+            conversation_memory[user_id] = {'context': 'waiting_for_confirmation', 'med_id': med.id}
             return jsonify({
                 "reply": f"You have {med.medicine_name} pending. Should I mark it as taken?",
                 "action": {"type": "ASK_CONFIRMATION"}
             })
         else:
             names = ", ".join([m.medicine_name for m in pending])
-            conversation_memory[user_id] = {
-                'context': 'waiting_for_medicine_name'
-            }
+            conversation_memory[user_id] = {'context': 'waiting_for_medicine_name'}
             return jsonify({
                 "reply": f"You have {len(pending)} pending: {names}. Which one should I mark?",
                 "action": {"type": "IDLE"}
@@ -313,27 +362,27 @@ def voice_assistant():
     if 'game' in query or 'play' in query or 'গেম' in query:
         return jsonify({
             "reply": "Taking you to the Games page. Try the Memory Match card!",
-            "action": {"type": "NAVIGATE", "target": "game", "highlight": "memory-card"}   # <-- changed
+            "action": {"type": "NAVIGATE", "target": "game", "highlight": "memory-card"}
         })
     
-    # INTENT 3: WHERE IS / NAVIGATION HELP
+    # INTENT 3: WHERE IS
     if 'where' in query or 'find' in query or 'ক' in query:
         if 'game' in query:
             return jsonify({
                 "reply": "Opening the Games page for you. Look for the yellow Memory Match card.",
-                "action": {"type": "NAVIGATE", "target": "game", "highlight": "memory-card"}   # <-- changed
+                "action": {"type": "NAVIGATE", "target": "game", "highlight": "memory-card"}
             })
         if 'medicine' in query or 'med' in query:
             return jsonify({
                 "reply": "Taking you to your Medicine page.",
-                "action": {"type": "NAVIGATE", "target": "medicine", "highlight": "medicine-section"}   # <-- added highlight
+                "action": {"type": "NAVIGATE", "target": "medicine", "highlight": "medicine-section"}
             })
     
     # INTENT 4: SOS / HELP
     if 'sos' in query or 'help' in query or 'emergency' in query or 'সাহায্য' in query:
         return jsonify({
             "reply": "Opening the emergency contact section immediately.",
-            "action": {"type": "OPEN_SOS", "highlight": "emergency-box"}   # <-- added highlight
+            "action": {"type": "OPEN_SOS", "highlight": "emergency-box"}
         })
     
     # FALLBACK
