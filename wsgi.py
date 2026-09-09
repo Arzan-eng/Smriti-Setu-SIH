@@ -2,7 +2,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from app.routes import main_bp
-from app.auth_routes import auth_bp   # <-- make sure this import exists
+from app.auth_routes import auth_bp
 from app.models import db
 import os
 from datetime import timedelta
@@ -13,10 +13,16 @@ app = Flask(__name__)
 app.secret_key = 'your-super-secret-key-change-this-in-production'
 app.permanent_session_lifetime = timedelta(days=7)
 
+# ── 🔥 CROSS‑SITE COOKIE SETTINGS ──
+app.config.update(
+    SESSION_COOKIE_SECURE=True,          # Required for HTTPS
+    SESSION_COOKIE_SAMESITE='None',      # Allows cross‑origin cookies
+)
+
 # ── CORS with credentials support ──
 CORS(app,
      resources={r"/*": {"origins": "*"}},
-     supports_credentials=True,                # <-- CRITICAL
+     supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"]
 )
 
@@ -36,9 +42,9 @@ with app.app_context():
     db.create_all()
     print("✅ Database tables created")
 
-# ── Register both blueprints ──
-app.register_blueprint(main_bp)      # your existing routes
-app.register_blueprint(auth_bp)      # auth routes (make sure this exists)
+# ── Register blueprints ──
+app.register_blueprint(main_bp)
+app.register_blueprint(auth_bp)
 
 # ── Test routes ──
 @app.route('/ping')
