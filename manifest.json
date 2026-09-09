@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Smriti-Setu",
+  "name": "Smriti-Setu – Memory Companion",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,7 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0D9B76",
+  "background_color": "#F7F5F2",
+  "orientation": "portrait"
 }
