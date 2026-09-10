@@ -6,15 +6,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
 # ============================================================
-#  USER MODEL (UPDATED WITH AUTHENTICATION)
+#  USER MODEL (UPDATED WITH AUTHENTICATION + CAREGIVER SUPPORT)
 # ============================================================
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)   # NEW: For login
-    password_hash = db.Column(db.String(200), nullable=False)        # NEW: Stores hashed password
+    email = db.Column(db.String(100), unique=True, nullable=False)   # For login
+    password_hash = db.Column(db.String(200), nullable=False)        # Stores hashed password
     language = db.Column(db.String(10), default='as')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)     # NEW: Track when user joined
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)     # Track when user joined
+
+    # ── 👈 ADDED: Caregiver support ──
+    role = db.Column(db.String(20), default='patient')               # 'patient' or 'caregiver'
+    caregiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Links patient to caregiver
 
     # ── Password methods ──
     def set_password(self, password):
@@ -26,7 +30,7 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return f"<User {self.name} ({self.email})>"
+        return f"<User {self.name} ({self.email}) - {self.role}>"
 
 
 # ============================================================
