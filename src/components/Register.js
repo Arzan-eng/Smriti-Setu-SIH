@@ -28,11 +28,11 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
         setLoading(false);
         return;
       }
-      // 🔥 Store JWT token + user
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       onRegister(data.user);
     } catch (err) {
+      console.error('Register error:', err);
       setError('Failed to connect to server');
       setLoading(false);
     }
