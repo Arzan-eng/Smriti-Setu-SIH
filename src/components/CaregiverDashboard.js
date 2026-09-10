@@ -3,6 +3,13 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'https://smriti-setu-sih-1.onrender.com';
 
+// 🔥 JWT helper
+const getToken = () => localStorage.getItem('token');
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${getToken()}`
+});
+
 const CaregiverDashboard = ({ currentUser }) => {
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -20,14 +27,18 @@ const CaregiverDashboard = ({ currentUser }) => {
 
   const fetchSummary = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/caregiver/summary`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/caregiver/summary`, {
+        headers: authHeaders()
+      });
       if (res.ok) setSummary(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchPatients = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/caregiver/patients`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/caregiver/patients`, {
+        headers: authHeaders()
+      });
       if (res.ok) setPatients(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -35,7 +46,9 @@ const CaregiverDashboard = ({ currentUser }) => {
 
   const fetchPatientDetails = async (id) => {
     try {
-      const res = await fetch(`${API_BASE}/api/caregiver/patient/${id}`, { credentials: 'include' });
+      const res = await fetch(`${API_BASE}/api/caregiver/patient/${id}`, {
+        headers: authHeaders()
+      });
       if (res.ok) {
         const data = await res.json();
         setPatientDetails(data);
@@ -49,8 +62,7 @@ const CaregiverDashboard = ({ currentUser }) => {
     try {
       const res = await fetch(`${API_BASE}/api/caregiver/link`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: authHeaders(),
         body: JSON.stringify({ patient_email: linkEmail })
       });
       const data = await res.json();
@@ -60,9 +72,12 @@ const CaregiverDashboard = ({ currentUser }) => {
         fetchPatients();
         fetchSummary();
       } else {
-        alert(data.error);
+        alert(data.error || 'Failed to link patient');
       }
-    } catch (e) { alert('Failed to link patient'); }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to link patient');
+    }
   };
 
   const addMedication = async (e) => {
@@ -77,17 +92,23 @@ const CaregiverDashboard = ({ currentUser }) => {
     try {
       const res = await fetch(`${API_BASE}/api/caregiver/medication/add`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: authHeaders(),
         body: JSON.stringify(payload)
       });
       if (res.ok) {
         e.target.reset();
         setShowAddMed(false);
         fetchPatientDetails(selectedPatient);
+        fetchSummary();
         alert('✅ Medication added!');
+      } else {
+        const err = await res.json();
+        alert('❌ ' + (err.error || 'Failed to add medication'));
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      alert('❌ Network error');
+    }
   };
 
   const deleteMedication = async (medId) => {
@@ -95,10 +116,11 @@ const CaregiverDashboard = ({ currentUser }) => {
     try {
       const res = await fetch(`${API_BASE}/api/caregiver/medication/${medId}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: authHeaders()
       });
       if (res.ok) {
         fetchPatientDetails(selectedPatient);
+        fetchSummary();
       }
     } catch (e) { console.error(e); }
   };
@@ -150,7 +172,13 @@ const CaregiverDashboard = ({ currentUser }) => {
           onChange={(e) => setLinkEmail(e.target.value)}
           style={{ flex: 1, padding: '12px 14px', border: '1px solid #E8E4DF', borderRadius: '10px', fontSize: '14px' }}
         />
-        <button onClick={linkPatient} style={{ padding: '12px 24px', background: '#0D9B76', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>
+        <button
+          onClick={linkPatient}
+          style={{
+            padding: '12px 24px', background: '#0D9B76', color: '#fff',
+            border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer'
+          }}
+        >
           <i className="fas fa-link"></i> Link
         </button>
       </div>
@@ -160,7 +188,9 @@ const CaregiverDashboard = ({ currentUser }) => {
       {patients.length === 0 ? (
         <div className="empty-state">
           <i className="fas fa-users" style={{ fontSize: '48px', color: '#8E8A82', marginBottom: '16px' }}></i>
-          <p style={{ color: '#8E8A82', textAlign: 'center' }}>No patients linked yet. Use the form above to link a patient by their email.</p>
+          <p style={{ color: '#8E8A82', textAlign: 'center' }}>
+            No patients linked yet. Use the form above to link a patient by their email.
+          </p>
         </div>
       ) : (
         <div className="support-grid">
@@ -192,18 +222,34 @@ const CaregiverDashboard = ({ currentUser }) => {
             <h3 style={{ fontSize: '18px' }}>💊 Medications</h3>
             <button
               onClick={() => setShowAddMed(!showAddMed)}
-              style={{ padding: '8px 16px', background: '#0D9B76', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}
+              style={{
+                padding: '8px 16px', background: '#0D9B76', color: '#fff',
+                border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+              }}
             >
               <i className="fas fa-plus"></i> Add Medication
             </button>
           </div>
 
           {showAddMed && (
-            <form onSubmit={addMedication} style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', padding: '16px', background: '#F7F5F2', borderRadius: '12px' }}>
-              <input name="name" placeholder="Medicine name" required style={{ flex: 1, padding: '10px', border: '1px solid #E8E4DF', borderRadius: '8px' }} />
-              <input name="dose" placeholder="Dosage" required style={{ flex: 1, padding: '10px', border: '1px solid #E8E4DF', borderRadius: '8px' }} />
-              <input name="time" type="time" required style={{ padding: '10px', border: '1px solid #E8E4DF', borderRadius: '8px' }} />
-              <button type="submit" style={{ padding: '10px 20px', background: '#0D9B76', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+            <form
+              onSubmit={addMedication}
+              style={{
+                display: 'flex', gap: '10px', marginBottom: '16px',
+                flexWrap: 'wrap', padding: '16px', background: '#F7F5F2', borderRadius: '12px'
+              }}
+            >
+              <input name="name" placeholder="Medicine name" required
+                style={{ flex: 1, padding: '10px', border: '1px solid #E8E4DF', borderRadius: '8px' }} />
+              <input name="dose" placeholder="Dosage" required
+                style={{ flex: 1, padding: '10px', border: '1px solid #E8E4DF', borderRadius: '8px' }} />
+              <input name="time" type="time" required
+                style={{ padding: '10px', border: '1px solid #E8E4DF', borderRadius: '8px' }} />
+              <button type="submit"
+                style={{
+                  padding: '10px 20px', background: '#0D9B76', color: '#fff',
+                  border: 'none', borderRadius: '8px', cursor: 'pointer'
+                }}>
                 Save
               </button>
             </form>
@@ -241,7 +287,9 @@ const CaregiverDashboard = ({ currentUser }) => {
             patientDetails.games.map((g, i) => (
               <div key={i} className="medicine-item" style={{ marginBottom: '8px' }}>
                 <div className="med-info">
-                  <span className="med-name">{g.game_id === 'memory_match' ? '🧠 Memory Match' : '🎭 Kichu Kichu'}</span>
+                  <span className="med-name">
+                    {g.game_id === 'memory_match' ? '🧠 Memory Match' : '🎭 Kichu Kichu'}
+                  </span>
                   <span className="med-dose">{new Date(g.played_at).toLocaleDateString()}</span>
                 </div>
                 <span style={{ fontWeight: '700', color: '#0D9B76' }}>{g.score}%</span>
