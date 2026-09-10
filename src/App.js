@@ -255,14 +255,23 @@ function App() {
     setActiveGame(null);
   };
 
+  // 🔥 Get first name only (e.g., "Arzan Tamboli" → "Arzan")
+  const getFirstName = () => {
+    if (!currentUser?.name) return 'User';
+    return currentUser.name.split(' ')[0];
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
         return (
           <div className="page-container">
             <header className="page-header animate-in">
-              <div className="greeting-text">{getGreeting()}</div>
-              <h1>NER Memory Companion</h1>
+              {/* 🔥 Personalized greeting */}
+              <h1>Welcome, {getFirstName()}! 👋</h1>
+              <div className="greeting-text" style={{ marginTop: '6px' }}>
+                {getGreeting()} — here's your daily summary
+              </div>
             </header>
 
             <div className="home-grid">
