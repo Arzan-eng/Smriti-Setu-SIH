@@ -1,5 +1,5 @@
 # app/auth_routes.py
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from app.models import db, User
 import re
 import jwt
