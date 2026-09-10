@@ -63,3 +63,16 @@ class Medication(db.Model):
 
     def __repr__(self):
         return f"<Medication {self.medicine_name} at {self.schedule_time}>"
+
+
+# ============================================================
+#  HYDRATION MODEL (NEW – WATER INTAKE TRACKING)
+# ============================================================
+class Hydration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    amount_ml = db.Column(db.Integer, default=250)              # 1 glass = 250ml
+    logged_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Hydration {self.amount_ml}ml for user {self.user_id}>"
