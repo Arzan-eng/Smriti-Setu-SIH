@@ -1055,3 +1055,174 @@ body {
   color: #8E8A82;
   margin-top: 12px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   💧 HYDRATION TAB (NEW)
+   ════════════════════════════════════════════════════════════ */
+.hydration-hero {
+  background: linear-gradient(135deg, #3B82F6, #1E40AF);
+  border-radius: 20px;
+  padding: 36px 24px;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+.hydration-hero::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  top: -80px;
+  right: -60px;
+}
+.hydration-hero::after {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  bottom: -60px;
+  left: -40px;
+}
+
+.hydration-ring {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 16px;
+  position: relative;
+}
+.hydration-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.hydration-ring .ring-bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 4;
+}
+.hydration-ring .ring-fill.hydration {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.hydration-ring-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+}
+.hydration-big {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+.hydration-small {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.hydration-text {
+  font-size: 16px;
+  font-weight: 600;
+  position: relative;
+  margin-bottom: 4px;
+}
+.hydration-subtext {
+  font-size: 14px;
+  opacity: 0.9;
+  position: relative;
+}
+
+.hydration-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.hydration-btn {
+  background: #fff;
+  border: 2px solid #E8E4DF;
+  border-radius: 16px;
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.hydration-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  border-color: #3B82F6;
+}
+.hydration-btn:active {
+  transform: scale(0.96);
+}
+.hydration-btn i {
+  font-size: 24px;
+  color: #3B82F6;
+  margin-bottom: 4px;
+}
+.hydration-btn.small i { font-size: 20px; }
+.hydration-btn.large i { font-size: 28px; }
+.hydration-btn .btn-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.hydration-btn .btn-ml {
+  font-size: 11px;
+  color: #8E8A82;
+  font-weight: 500;
+}
+
+.hydration-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #E8E4DF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.hydration-entry-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #E0EDFF;
+  color: #3B82F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .hydration-ring {
+    width: 130px;
+    height: 130px;
+  }
+  .hydration-big {
+    font-size: 32px;
+  }
+  .hydration-btn {
+    padding: 16px 8px;
+  }
+  .hydration-btn i {
+    font-size: 20px;
+  }
+}
