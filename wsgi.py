@@ -10,12 +10,12 @@ import os
 
 app = Flask(__name__)
 
-# ── CORS: JWT-friendly (no cookies needed) ──
-CORS(app,
-     resources={r"/*": {"origins": "*"}},
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
+# 🔥 JWT-friendly CORS (no supports_credentials!)
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "allow_headers": ["Content-Type", "Authorization"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}})
 
 instance_path = os.path.join(os.path.dirname(__file__), 'instance')
 if not os.path.exists(instance_path):
@@ -30,18 +30,14 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
     print("✅ Database tables created")
-
     try:
         db.session.execute(text("ALTER TABLE user ADD COLUMN role VARCHAR(20) DEFAULT 'patient'"))
         db.session.commit()
-        print("✅ Added 'role' column")
     except Exception:
         db.session.rollback()
-
     try:
         db.session.execute(text("ALTER TABLE user ADD COLUMN caregiver_id INTEGER REFERENCES user(id)"))
         db.session.commit()
-        print("✅ Added 'caregiver_id' column")
     except Exception:
         db.session.rollback()
 
