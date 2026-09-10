@@ -6,6 +6,7 @@ import MemoryMatchGame from './MemoryMatchGame';
 import KichuKichuGame from './KichuKichuGame';
 import Login from './components/Login';
 import Register from './components/Register';
+import CaregiverDashboard from './components/CaregiverDashboard'; // 👈 ADDED
 
 function App() {
   // ── Authentication state ──
@@ -182,38 +183,6 @@ function App() {
     }
   };
 
-  // ── 🆕 SOS with GPS ──
-  const handleSOS = () => {
-    if (navigator.geolocation) {
-      alert('📍 Getting your location...');
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-          const confirmMsg = `🚨 EMERGENCY!\n\nSend this location to your caregiver:\n📍 ${mapsLink}\n\n📞 Call caregiver now?`;
-          if (window.confirm(confirmMsg)) {
-            window.open('tel:1234567890'); // Replace with actual caregiver number
-          }
-        },
-        (error) => {
-          console.error('GPS Error:', error);
-          alert('⚠️ Could not get your location. Please call your caregiver immediately.\n\n📞 1800-XXX-XXXX');
-          window.open('tel:1800XXX');
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      alert('❌ GPS not supported. Please call your caregiver immediately.\n\n📞 1800-XXX-XXXX');
-      window.open('tel:1800XXX');
-    }
-  };
-
   // ── Auth handlers ──
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -266,7 +235,7 @@ function App() {
                         <svg viewBox="0 0 36 36">
                           <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
                           <circle className="ring-fill accent" cx="18" cy="18" r="15.5"
-                            stroke-dasharray="97.4" stroke-dashoffset="14.6"></circle>
+                            strokeDasharray="97.4" strokeDashoffset="14.6"></circle>
                         </svg>
                         <span className="score-value">85%</span>
                       </div>
@@ -278,7 +247,7 @@ function App() {
                         <svg viewBox="0 0 36 36">
                           <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
                           <circle className="ring-fill coral" cx="18" cy="18" r="15.5"
-                            stroke-dasharray="97.4" stroke-dashoffset="21.4"></circle>
+                            strokeDasharray="97.4" strokeDashoffset="21.4"></circle>
                         </svg>
                         <span className="score-value">78%</span>
                       </div>
@@ -608,67 +577,16 @@ function App() {
               <div className="emergency-icon"><i className="fas fa-triangle-exclamation"></i></div>
               <div className="em-title">🚨 Emergency?</div>
               <div className="em-desc">Call 911 or your local emergency number immediately</div>
-              <button className="emergency-call-btn" onClick={handleSOS}>
+              <button className="emergency-call-btn" onClick={() => alert('Calling emergency...')}>
                 <i className="fas fa-phone"></i> Call Emergency
-              </button>
-            </div>
-
-            {/* ── 🆕 QR Code Share Section ── */}
-            <div className="qr-share-section animate-in delay-5" style={{
-              marginTop: '24px',
-              padding: '24px',
-              background: '#fff',
-              borderRadius: '16px',
-              border: '1px solid #E8E4DF',
-              textAlign: 'center',
-              boxShadow: '0 2px 16px rgba(26,26,26,0.06)'
-            }}>
-              <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>📱 Share Smriti-Setu</h3>
-              <p style={{ color: '#8E8A82', fontSize: '14px', marginBottom: '16px' }}>
-                Scan to download the app
-              </p>
-
-              <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://smriti-setu-sih.vercel.app/"
-                alt="QR Code to Smriti-Setu"
-                style={{
-                  maxWidth: '200px',
-                  height: 'auto',
-                  margin: '0 auto',
-                  display: 'block',
-                  borderRadius: '12px',
-                  border: '2px solid #E8E4DF'
-                }}
-              />
-
-              <p style={{ marginTop: '12px', fontSize: '13px', color: '#8E8A82', wordBreak: 'break-all' }}>
-                or visit: <br />
-                <strong style={{ color: '#0D9B76' }}>smriti-setu-sih.vercel.app</strong>
-              </p>
-
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText('https://smriti-setu-sih.vercel.app/')
-                    .then(() => alert('✅ Link copied to clipboard!'))
-                    .catch(() => alert('❌ Failed to copy. Please copy manually.'));
-                }}
-                style={{
-                  marginTop: '12px',
-                  padding: '10px 24px',
-                  background: '#0D9B76',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <i className="fas fa-copy"></i> Copy Link
               </button>
             </div>
           </div>
         );
+
+      // 👈 ADDED — Caregiver Dashboard tab
+      case 'caregiver':
+        return <CaregiverDashboard currentUser={currentUser} />;
 
       default: return <div>Unknown tab</div>;
     }
@@ -717,6 +635,8 @@ function App() {
           <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { setActiveTab('game'); setActiveGame(null); }}>🎮 Game</button>
           <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => setActiveTab('medicine')}>💊 Medicine</button>
           <button className={activeTab === 'support' ? 'active' : ''} onClick={() => setActiveTab('support')}>🆘 Support</button>
+          {/* 👈 ADDED — Caregiver tab */}
+          <button className={activeTab === 'caregiver' ? 'active' : ''} onClick={() => setActiveTab('caregiver')}>👨‍⚕️ Caregiver</button>
         </div>
         <div className="nav-right">
           <span className="user-name">{currentUser?.name || 'User'}</span>
