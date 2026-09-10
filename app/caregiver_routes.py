@@ -10,7 +10,6 @@ caregiver_bp = Blueprint('caregiver', __name__)
 SECRET_KEY = 'your-super-secret-jwt-key-change-in-production'
 
 
-# ── JWT helper ──
 def get_current_user():
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
@@ -19,7 +18,8 @@ def get_current_user():
     try:
         data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
         return User.query.get(data['user_id'])
-    except Exception:
+    except Exception as e:
+        print(f"JWT decode error: {e}")
         return None
 
 
@@ -28,12 +28,11 @@ def token_required(f):
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': 'Unauthorized', 'detail': 'No valid token'}), 401
         return f(user, *args, **kwargs)
     return decorated
 
 
-# ── GET PATIENTS ──
 @caregiver_bp.route('/api/caregiver/patients', methods=['GET'])
 @token_required
 def get_patients(current_user):
@@ -43,12 +42,8 @@ def get_patients(current_user):
         total_meds = Medication.query.filter_by(user_id=p.id).count()
         taken_meds = Medication.query.filter_by(user_id=p.id, is_taken=True).count()
         last_game = GameSession.query.filter_by(user_id=p.id).order_by(GameSession.played_at.desc()).first()
-
         result.append({
-            "id": p.id,
-            "name": p.name,
-            "email": p.email,
-            "language": p.language,
+            "id": p.id, "name": p.name, "email": p.email, "language": p.language,
             "total_medications": total_meds,
             "taken_medications": taken_meds,
             "last_active": last_game.played_at.isoformat() if last_game else None,
@@ -57,7 +52,6 @@ def get_patients(current_user):
     return jsonify(result), 200
 
 
-# ── GET PATIENT DETAILS ──
 @caregiver_bp.route('/api/caregiver/patient/<int:patient_id>', methods=['GET'])
 @token_required
 def get_patient_details(current_user, patient_id):
@@ -67,11 +61,8 @@ def get_patient_details(current_user, patient_id):
 
     meds = Medication.query.filter_by(user_id=patient_id).all()
     med_list = [{
-        "id": m.id,
-        "medicine_name": m.medicine_name,
-        "dosage": m.dosage,
-        "schedule_time": m.schedule_time,
-        "is_taken": m.is_taken,
+        "id": m.id, "medicine_name": m.medicine_name, "dosage": m.dosage,
+        "schedule_time": m.schedule_time, "is_taken": m.is_taken,
     } for m in meds]
 
     week_ago = datetime.utcnow() - timedelta(days=7)
@@ -80,31 +71,23 @@ def get_patient_details(current_user, patient_id):
         GameSession.played_at >= week_ago
     ).all()
     games = [{
-        "game_id": s.game_id,
-        "score": s.score,
-        "difficulty": s.difficulty,
-        "played_at": s.played_at.isoformat(),
+        "game_id": s.game_id, "score": s.score,
+        "difficulty": s.difficulty, "played_at": s.played_at.isoformat(),
     } for s in sessions]
 
     return jsonify({
-        "patient": {
-            "id": patient.id,
-            "name": patient.name,
-            "email": patient.email,
-            "language": patient.language,
-        },
+        "patient": {"id": patient.id, "name": patient.name,
+                     "email": patient.email, "language": patient.language},
         "medications": med_list,
         "games": games,
     }), 200
 
 
-# ── ADD MEDICATION FOR PATIENT ──
 @caregiver_bp.route('/api/caregiver/medication/add', methods=['POST'])
 @token_required
 def caregiver_add_medication(current_user):
     data = request.get_json()
     patient_id = data.get('patient_id')
-
     patient = User.query.get(patient_id)
     if not patient or patient.caregiver_id != current_user.id:
         return jsonify({"error": "Patient not found or not linked to you"}), 404
@@ -114,10 +97,8 @@ def caregiver_add_medication(current_user):
         return jsonify({"error": "Missing fields"}), 400
 
     new_med = Medication(
-        user_id=patient_id,
-        medicine_name=data['medicine_name'],
-        dosage=data['dosage'],
-        schedule_time=data['schedule_time']
+        user_id=patient_id, medicine_name=data['medicine_name'],
+        dosage=data['dosage'], schedule_time=data['schedule_time']
     )
     db.session.add(new_med)
     db.session.commit()
@@ -129,38 +110,31 @@ def caregiver_add_medication(current_user):
     }), 201
 
 
-# ── DELETE MEDICATION ──
 @caregiver_bp.route('/api/caregiver/medication/<int:med_id>', methods=['DELETE'])
 @token_required
 def caregiver_delete_medication(current_user, med_id):
     med = Medication.query.get(med_id)
     if not med:
         return jsonify({"error": "Medication not found"}), 404
-
     patient = User.query.get(med.user_id)
     if not patient or patient.caregiver_id != current_user.id:
         return jsonify({"error": "Forbidden"}), 403
-
     db.session.delete(med)
     db.session.commit()
-
     return jsonify({"status": "success", "message": "Medication deleted"}), 200
 
 
-# ── LINK PATIENT TO CAREGIVER ──
 @caregiver_bp.route('/api/caregiver/link', methods=['POST'])
 @token_required
 def link_patient(current_user):
     data = request.get_json()
     patient_email = data.get('patient_email')
-
     if not patient_email:
         return jsonify({"error": "Patient email required"}), 400
 
     patient = User.query.filter_by(email=patient_email).first()
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
-
     if patient.id == current_user.id:
         return jsonify({"error": "You cannot link yourself"}), 400
 
@@ -175,25 +149,16 @@ def link_patient(current_user):
     }), 200
 
 
-# ── GET CAREGIVER SUMMARY ──
 @caregiver_bp.route('/api/caregiver/summary', methods=['GET'])
 @token_required
 def caregiver_summary(current_user):
     patients = User.query.filter_by(caregiver_id=current_user.id).all()
-    total_patients = len(patients)
-    total_meds = 0
-    taken_meds = 0
-    total_games = 0
-
-    for p in patients:
-        total_meds += Medication.query.filter_by(user_id=p.id).count()
-        taken_meds += Medication.query.filter_by(user_id=p.id, is_taken=True).count()
-        total_games += GameSession.query.filter_by(user_id=p.id).count()
-
+    total_meds = sum(Medication.query.filter_by(user_id=p.id).count() for p in patients)
+    taken_meds = sum(Medication.query.filter_by(user_id=p.id, is_taken=True).count() for p in patients)
+    total_games = sum(GameSession.query.filter_by(user_id=p.id).count() for p in patients)
     adherence = round((taken_meds / total_meds * 100) if total_meds > 0 else 0, 1)
-
     return jsonify({
-        "total_patients": total_patients,
+        "total_patients": len(patients),
         "total_medications": total_meds,
         "taken_medications": taken_meds,
         "adherence_rate": adherence,
