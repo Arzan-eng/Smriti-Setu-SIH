@@ -1,4 +1,4 @@
-// src/KichuKichuGame.js
+// src/mitesh dudu game.js
 import React, { useState, useEffect } from 'react';
 
 const QUESTIONS = [
@@ -9,7 +9,7 @@ const QUESTIONS = [
   { question: "Which is a famous river in the Northeast?", options: ["Ganga", "Brahmaputra", "Yamuna", "Godavari"], correct: 1 },
 ];
 
-const KichuKichuGame = ({ userId, onGameEnd }) => {
+const mitesh dudu game = ({ userId, onGameEnd }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [timer, setTimer] = useState(0);
