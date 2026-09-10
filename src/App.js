@@ -28,6 +28,43 @@ function App() {
   const [voiceReply, setVoiceReply] = useState('');
   const [userStats, setUserStats] = useState({ memory: 0, puzzle: 0 });
 
+  // 🔥 NEW: Tab history for back button support
+  const [tabHistory, setTabHistory] = useState(['home']);
+
+  // 🔥 NEW: Navigate to a tab and record in history
+  const navigateToTab = (tab) => {
+    if (tab === activeTab) return;
+    setTabHistory(prev => [...prev, tab]);
+    setActiveTab(tab);
+    window.history.pushState({ tab }, '', `#${tab}`);
+  };
+
+  // 🔥 NEW: Go back to previous tab
+  const goBack = () => {
+    if (tabHistory.length > 1) {
+      const newHistory = [...tabHistory];
+      newHistory.pop();
+      const previousTab = newHistory[newHistory.length - 1];
+      setTabHistory(newHistory);
+      setActiveTab(previousTab);
+      window.history.pushState({ tab: previousTab }, '', `#${previousTab}`);
+    } else {
+      setActiveTab('home');
+      window.history.pushState({ tab: 'home' }, '', '#home');
+    }
+  };
+
+  // 🔥 NEW: Handle browser back button
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const tab = event.state?.tab || 'home';
+      setActiveTab(tab);
+      setTabHistory(prev => (prev.length > 1 ? prev.slice(0, -1) : ['home']));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // ── Check auth on mount ──
   useEffect(() => {
     const checkAuth = async () => {
@@ -151,7 +188,7 @@ function App() {
     switch (action.type) {
       case 'NAVIGATE':
         if (action.target) {
-          setActiveTab(action.target);
+          navigateToTab(action.target); // 🔥 changed
           if (action.target === 'game' && action.game) setActiveGame(action.game);
           else if (action.target === 'game') setActiveGame(null);
         }
@@ -169,7 +206,7 @@ function App() {
         }
         break;
       case 'OPEN_SOS':
-        setActiveTab('support');
+        navigateToTab('support'); // 🔥 changed
         if (action.highlight) setTimeout(() => flashElement(action.highlight), 300);
         break;
       default: break;
@@ -240,8 +277,22 @@ function App() {
     }
   };
 
-  const handleLogin = (user) => { setCurrentUser(user); setIsAuthenticated(true); };
-  const handleRegister = (user) => { setCurrentUser(user); setIsAuthenticated(true); };
+  // 🔥 Updated to reset history on login/register
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setActiveTab('home');
+    setTabHistory(['home']);
+    window.history.pushState({ tab: 'home' }, '', '#home');
+  };
+
+  const handleRegister = (user) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setActiveTab('home');
+    setTabHistory(['home']);
+    window.history.pushState({ tab: 'home' }, '', '#home');
+  };
 
   const handleLogout = async () => {
     try {
@@ -253,6 +304,8 @@ function App() {
     setIsAuthenticated(false);
     setActiveTab('home');
     setActiveGame(null);
+    setTabHistory(['home']);
+    window.history.pushState({ tab: 'home' }, '', '#home');
   };
 
   // 🔥 Get first name only (e.g., "Arzan Tamboli" → "Arzan")
@@ -267,7 +320,6 @@ function App() {
         return (
           <div className="page-container">
             <header className="page-header animate-in">
-              {/* 🔥 Personalized greeting */}
               <h1>Welcome, {getFirstName()}! 👋</h1>
               <div className="greeting-text" style={{ marginTop: '6px' }}>
                 {getGreeting()} — here's your daily summary
@@ -323,17 +375,17 @@ function App() {
 
                 <div className="section-label animate-in delay-2">Quick Actions</div>
                 <div className="quick-actions animate-in delay-2">
-                  <div className="action-card" onClick={() => setActiveTab('exercise')}>
+                  <div className="action-card" onClick={() => navigateToTab('exercise')}>
                     <div className="action-icon teal"><i className="fas fa-brain"></i></div>
                     <div className="action-title">Start Exercise</div>
                     <div className="action-sub">3 new sessions</div>
                   </div>
-                  <div className="action-card" onClick={() => { setActiveTab('game'); setActiveGame(null); }}>
+                  <div className="action-card" onClick={() => { navigateToTab('game'); setActiveGame(null); }}>
                     <div className="action-icon purple"><i className="fas fa-puzzle-piece"></i></div>
                     <div className="action-title">Play Games</div>
                     <div className="action-sub">Sharpen memory</div>
                   </div>
-                  <div className="action-card" onClick={() => setActiveTab('medicine')}>
+                  <div className="action-card" onClick={() => navigateToTab('medicine')}>
                     <div className="action-icon coral"><i className="fas fa-pills"></i></div>
                     <div className="action-title">Log Medicine</div>
                     <div className="action-sub">{getTotalCount() - getTakenCount()} remaining</div>
@@ -345,7 +397,7 @@ function App() {
                   </div>
                 </div>
 
-                <div className="support-banner animate-in delay-3" onClick={() => setActiveTab('support')}>
+                <div className="support-banner animate-in delay-3" onClick={() => navigateToTab('support')}>
                   <div className="support-icon"><i className="fas fa-headset"></i></div>
                   <div className="support-text">
                     <div className="support-title">Support 24/7 Helpline</div>
@@ -686,16 +738,48 @@ function App() {
 
       <nav className="nav-bar">
         <div className="nav-logo">
-          <span className="logo-icon"><i className="fas fa-house"></i></span>
-          Smriti-Setu
+          {/* 🔥 Back arrow button – only shown when not on home */}
+          {activeTab !== 'home' && (
+            <button
+              className="back-btn-nav"
+              onClick={goBack}
+              title="Go back"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '18px',
+                padding: '6px 10px',
+                marginRight: '8px',
+                borderRadius: '8px',
+                color: '#0D9B76',
+                transition: '0.2s'
+              }}
+            >
+              <i className="fas fa-arrow-left"></i>
+            </button>
+          )}
+          <span
+            className="logo-icon"
+            onClick={() => navigateToTab('home')}
+            style={{ cursor: 'pointer' }}
+          >
+            <i className="fas fa-house"></i>
+          </span>
+          <span
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigateToTab('home')}
+          >
+            Smriti-Setu
+          </span>
         </div>
         <div className="nav-tabs">
-          <button className={activeTab === 'home' ? 'active' : ''} onClick={() => { setActiveTab('home'); setActiveGame(null); }}>🏠 Home</button>
-          <button className={activeTab === 'exercise' ? 'active' : ''} onClick={() => setActiveTab('exercise')}>🧠 Exercise</button>
-          <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { setActiveTab('game'); setActiveGame(null); }}>🎮 Game</button>
-          <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => setActiveTab('medicine')}>💊 Medicine</button>
-          <button className={activeTab === 'support' ? 'active' : ''} onClick={() => setActiveTab('support')}>🆘 Support</button>
-          <button className={activeTab === 'caregiver' ? 'active' : ''} onClick={() => setActiveTab('caregiver')}>👨‍⚕️ Caregiver</button>
+          <button className={activeTab === 'home' ? 'active' : ''} onClick={() => { navigateToTab('home'); setActiveGame(null); }}>🏠 Home</button>
+          <button className={activeTab === 'exercise' ? 'active' : ''} onClick={() => navigateToTab('exercise')}>🧠 Exercise</button>
+          <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { navigateToTab('game'); setActiveGame(null); }}>🎮 Game</button>
+          <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => navigateToTab('medicine')}>💊 Medicine</button>
+          <button className={activeTab === 'support' ? 'active' : ''} onClick={() => navigateToTab('support')}>🆘 Support</button>
+          <button className={activeTab === 'caregiver' ? 'active' : ''} onClick={() => navigateToTab('caregiver')}>👨‍⚕️ Caregiver</button>
         </div>
         <div className="nav-right">
           <span className="user-name">{currentUser?.name || 'User'}</span>
