@@ -28,6 +28,15 @@ function App() {
   const [voiceReply, setVoiceReply] = useState('');
   const [userStats, setUserStats] = useState({ memory: 0, puzzle: 0 });
 
+  // 🔥 NEW: Hydration state
+  const [hydration, setHydration] = useState({
+    total_ml: 0,
+    glasses: 0,
+    daily_goal_ml: 2000,
+    progress_percent: 0,
+    entries: []
+  });
+
   // 🔥 NEW: Tab history for back button support
   const [tabHistory, setTabHistory] = useState(['home']);
 
@@ -154,10 +163,47 @@ function App() {
     }
   };
 
+  // 🔥 NEW: Fetch today's hydration
+  const fetchHydration = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/hydration/today`, {
+        headers: authHeaders()
+      });
+      if (res.ok) setHydration(await res.json());
+    } catch (e) { console.error('Hydration fetch failed:', e); }
+  };
+
+  // 🔥 NEW: Log water intake
+  const logWater = async (amount) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/hydration/log`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ amount_ml: amount })
+      });
+      if (res.ok) {
+        await fetchHydration();
+      }
+    } catch (e) { console.error('Log water failed:', e); }
+  };
+
+  // 🔥 NEW: Undo last water entry
+  const undoWater = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/hydration/undo`, {
+        method: 'POST',
+        headers: authHeaders()
+      });
+      if (res.ok) fetchHydration();
+    } catch (e) { console.error('Undo water failed:', e); }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchMedicines();
       fetchUserStats();
+      fetchHydration();  // 🔥 NEW
     }
   }, [currentUser]);
 
@@ -188,7 +234,7 @@ function App() {
     switch (action.type) {
       case 'NAVIGATE':
         if (action.target) {
-          navigateToTab(action.target); // 🔥 changed
+          navigateToTab(action.target);
           if (action.target === 'game' && action.game) setActiveGame(action.game);
           else if (action.target === 'game') setActiveGame(null);
         }
@@ -206,7 +252,7 @@ function App() {
         }
         break;
       case 'OPEN_SOS':
-        navigateToTab('support'); // 🔥 changed
+        navigateToTab('support');
         if (action.highlight) setTimeout(() => flashElement(action.highlight), 300);
         break;
       default: break;
@@ -596,6 +642,113 @@ function App() {
           </div>
         );
 
+      // 🔥 NEW: HYDRATION TAB
+      case 'hydration':
+        return (
+          <div className="page-container">
+            <header className="page-header animate-in">
+              <div className="greeting-text">Stay Hydrated</div>
+              <h1>💧 Hydration Tracker</h1>
+            </header>
+
+            {/* Main Progress Card */}
+            <div className="hydration-hero animate-in delay-1">
+              <div className="hydration-ring">
+                <svg viewBox="0 0 36 36">
+                  <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
+                  <circle
+                    className="ring-fill hydration"
+                    cx="18" cy="18" r="15.5"
+                    strokeDasharray="97.4"
+                    strokeDashoffset={97.4 - (97.4 * hydration.progress_percent / 100)}
+                    style={{ transition: 'stroke-dashoffset 1s ease' }}
+                  ></circle>
+                </svg>
+                <div className="hydration-ring-value">
+                  <span className="hydration-big">{hydration.glasses}</span>
+                  <span className="hydration-small">/ 8 glasses</span>
+                </div>
+              </div>
+              <p className="hydration-text">
+                {hydration.total_ml}ml of {hydration.daily_goal_ml}ml today
+              </p>
+              <p className="hydration-subtext">
+                {hydration.progress_percent >= 100
+                  ? '🎉 Goal reached! Great job!'
+                  : hydration.progress_percent >= 50
+                  ? '👍 Halfway there, keep going!'
+                  : '💧 Stay hydrated for better memory!'}
+              </p>
+            </div>
+
+            {/* Quick Add Buttons */}
+            <div className="section-label animate-in delay-2">Log Water Intake</div>
+            <div className="hydration-buttons animate-in delay-2">
+              <button className="hydration-btn small" onClick={() => logWater(150)}>
+                <i className="fas fa-glass-water"></i>
+                <span className="btn-label">Small</span>
+                <span className="btn-ml">150ml</span>
+              </button>
+              <button className="hydration-btn medium" onClick={() => logWater(250)}>
+                <i className="fas fa-glass-water"></i>
+                <span className="btn-label">Glass</span>
+                <span className="btn-ml">250ml</span>
+              </button>
+              <button className="hydration-btn large" onClick={() => logWater(500)}>
+                <i className="fas fa-bottle-water"></i>
+                <span className="btn-label">Bottle</span>
+                <span className="btn-ml">500ml</span>
+              </button>
+            </div>
+
+            {/* Undo Button */}
+            {hydration.entries.length > 0 && (
+              <div className="animate-in delay-3" style={{ marginTop: '12px', textAlign: 'center' }}>
+                <button
+                  onClick={undoWater}
+                  style={{
+                    background: 'transparent', border: '1px solid #E8E4DF',
+                    padding: '8px 20px', borderRadius: '10px',
+                    color: '#8E8A82', cursor: 'pointer', fontSize: '13px'
+                  }}
+                >
+                  <i className="fas fa-undo"></i> Undo Last Entry
+                </button>
+              </div>
+            )}
+
+            {/* Today's Log */}
+            <div className="section-label animate-in delay-3">Today's Log</div>
+            {hydration.entries.length === 0 ? (
+              <div className="empty-state">
+                <i className="fas fa-glass-water" style={{ fontSize: '48px', color: '#8E8A82', marginBottom: '16px' }}></i>
+                <p style={{ color: '#8E8A82', textAlign: 'center' }}>
+                  No water logged yet. Tap a button above to start!
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {hydration.entries.map((e) => (
+                  <div key={e.id} className="hydration-entry">
+                    <div className="hydration-entry-icon">
+                      <i className="fas fa-glass-water"></i>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600 }}>{e.amount_ml}ml</div>
+                      <div style={{ fontSize: '12px', color: '#8E8A82' }}>
+                        {new Date(e.time).toLocaleTimeString('en-US', {
+                          hour: '2-digit', minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                    <i className="fas fa-check-circle" style={{ color: '#0D9B76', fontSize: '18px' }}></i>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
       case 'support':
         return (
           <div className="support-tab-content">
@@ -778,6 +931,7 @@ function App() {
           <button className={activeTab === 'exercise' ? 'active' : ''} onClick={() => navigateToTab('exercise')}>🧠 Exercise</button>
           <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { navigateToTab('game'); setActiveGame(null); }}>🎮 Game</button>
           <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => navigateToTab('medicine')}>💊 Medicine</button>
+          <button className={activeTab === 'hydration' ? 'active' : ''} onClick={() => navigateToTab('hydration')}>💧 Hydration</button>
           <button className={activeTab === 'support' ? 'active' : ''} onClick={() => navigateToTab('support')}>🆘 Support</button>
           <button className={activeTab === 'caregiver' ? 'active' : ''} onClick={() => navigateToTab('caregiver')}>👨‍⚕️ Caregiver</button>
         </div>
