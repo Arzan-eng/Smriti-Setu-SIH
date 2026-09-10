@@ -28,7 +28,7 @@ def token_required(f):
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user:
-            return jsonify({'error': 'Unauthorized', 'detail': 'No valid token'}), 401
+            return jsonify({'error': 'Unauthorized'}), 401
         return f(user, *args, **kwargs)
     return decorated
 
@@ -164,3 +164,4 @@ def caregiver_summary(current_user):
         "adherence_rate": adherence,
         "total_games_played": total_games,
     }), 200
+    
