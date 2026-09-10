@@ -33,10 +33,16 @@ def token_required(f):
     return decorated
 
 
+# ── LIST PATIENTS ──
 @caregiver_bp.route('/api/caregiver/patients', methods=['GET'])
 @token_required
 def get_patients(current_user):
-    patients = User.query.filter_by(caregiver_id=current_user.id).all()
+    # 🔥 Exclude yourself from the list
+    patients = User.query.filter(
+        User.caregiver_id == current_user.id,
+        User.id != current_user.id
+    ).all()
+
     result = []
     for p in patients:
         total_meds = Medication.query.filter_by(user_id=p.id).count()
@@ -52,9 +58,14 @@ def get_patients(current_user):
     return jsonify(result), 200
 
 
+# ── PATIENT DETAILS ──
 @caregiver_bp.route('/api/caregiver/patient/<int:patient_id>', methods=['GET'])
 @token_required
 def get_patient_details(current_user, patient_id):
+    # 🔥 Extra safety: block viewing self
+    if patient_id == current_user.id:
+        return jsonify({"error": "You cannot view yourself as a patient"}), 400
+
     patient = User.query.get(patient_id)
     if not patient or patient.caregiver_id != current_user.id:
         return jsonify({"error": "Patient not found or not linked to you"}), 404
@@ -83,11 +94,17 @@ def get_patient_details(current_user, patient_id):
     }), 200
 
 
+# ── ADD MEDICATION FOR PATIENT ──
 @caregiver_bp.route('/api/caregiver/medication/add', methods=['POST'])
 @token_required
 def caregiver_add_medication(current_user):
     data = request.get_json()
     patient_id = data.get('patient_id')
+
+    # 🔥 Block adding meds to yourself via caregiver dashboard
+    if patient_id == current_user.id:
+        return jsonify({"error": "You cannot add medications to yourself from here"}), 400
+
     patient = User.query.get(patient_id)
     if not patient or patient.caregiver_id != current_user.id:
         return jsonify({"error": "Patient not found or not linked to you"}), 404
@@ -110,6 +127,7 @@ def caregiver_add_medication(current_user):
     }), 201
 
 
+# ── DELETE MEDICATION ──
 @caregiver_bp.route('/api/caregiver/medication/<int:med_id>', methods=['DELETE'])
 @token_required
 def caregiver_delete_medication(current_user, med_id):
@@ -124,23 +142,46 @@ def caregiver_delete_medication(current_user, med_id):
     return jsonify({"status": "success", "message": "Medication deleted"}), 200
 
 
+# ── LINK PATIENT ──
 @caregiver_bp.route('/api/caregiver/link', methods=['POST'])
 @token_required
 def link_patient(current_user):
     data = request.get_json()
     patient_email = data.get('patient_email')
+
     if not patient_email:
         return jsonify({"error": "Patient email required"}), 400
 
-    patient = User.query.filter_by(email=patient_email).first()
-    if not patient:
-        return jsonify({"error": "Patient not found"}), 404
-    if patient.id == current_user.id:
-        return jsonify({"error": "You cannot link yourself"}), 400
+    # 🔥 Normalize email
+    patient_email = patient_email.strip().lower()
 
+    # 🔥 Block self-linking by email BEFORE lookup
+    if patient_email == current_user.email.lower():
+        return jsonify({"error": "You cannot link your own email"}), 400
+
+    patient = User.query.filter(User.email.ilike(patient_email)).first()
+    if not patient:
+        return jsonify({"error": "No user found with that email. Ask them to register first."}), 404
+
+    # 🔥 Block self-linking by ID
+    if patient.id == current_user.id:
+        return jsonify({"error": "You cannot link yourself as a patient"}), 400
+
+    # 🔥 Block if patient is already linked to someone else
+    if patient.caregiver_id and patient.caregiver_id != current_user.id:
+        return jsonify({"error": "This patient is already linked to another caregiver"}), 409
+
+    # 🔥 Block if this user is already a linked patient (can't be caregiver)
+    if current_user.caregiver_id is not None:
+        return jsonify({"error": "You are already linked as a patient. You cannot be a caregiver."}), 403
+
+    # 🔥 Link patient
     patient.caregiver_id = current_user.id
+
+    # 🔥 Promote current user to caregiver
     if current_user.role != 'caregiver':
         current_user.role = 'caregiver'
+
     db.session.commit()
 
     return jsonify({
@@ -149,14 +190,38 @@ def link_patient(current_user):
     }), 200
 
 
+# ── UNLINK PATIENT ──
+@caregiver_bp.route('/api/caregiver/unlink/<int:patient_id>', methods=['POST'])
+@token_required
+def unlink_patient(current_user, patient_id):
+    patient = User.query.get(patient_id)
+    if not patient or patient.caregiver_id != current_user.id:
+        return jsonify({"error": "Patient not found or not linked to you"}), 404
+
+    patient.caregiver_id = None
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Unlinked from {patient.name}"
+    }), 200
+
+
+# ── CAREGIVER SUMMARY ──
 @caregiver_bp.route('/api/caregiver/summary', methods=['GET'])
 @token_required
 def caregiver_summary(current_user):
-    patients = User.query.filter_by(caregiver_id=current_user.id).all()
+    # 🔥 Exclude self from patient list
+    patients = User.query.filter(
+        User.caregiver_id == current_user.id,
+        User.id != current_user.id
+    ).all()
+
     total_meds = sum(Medication.query.filter_by(user_id=p.id).count() for p in patients)
     taken_meds = sum(Medication.query.filter_by(user_id=p.id, is_taken=True).count() for p in patients)
     total_games = sum(GameSession.query.filter_by(user_id=p.id).count() for p in patients)
     adherence = round((taken_meds / total_meds * 100) if total_meds > 0 else 0, 1)
+
     return jsonify({
         "total_patients": len(patients),
         "total_medications": total_meds,
@@ -164,4 +229,20 @@ def caregiver_summary(current_user):
         "adherence_rate": adherence,
         "total_games_played": total_games,
     }), 200
-    
+
+
+# ── ⚠️ TEMPORARY ADMIN ROUTE – Remove after cleanup ──
+@caregiver_bp.route('/api/caregiver/admin/reset-links', methods=['POST'])
+def reset_all_links():
+    """
+    ⚠️ ADMIN ONLY – Use this ONCE to clean up the database.
+    Call: POST /api/caregiver/admin/reset-links
+    Remove this route after cleanup.
+    """
+    User.query.update({User.caregiver_id: None})
+    User.query.update({User.role: 'patient'})
+    db.session.commit()
+    return jsonify({
+        "status": "success",
+        "message": "All caregiver links reset. Everyone is now a patient."
+    }), 200
