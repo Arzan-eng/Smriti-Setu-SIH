@@ -16,7 +16,6 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
       const res = await fetch('https://smriti-setu-sih-1.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
@@ -25,6 +24,9 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         setLoading(false);
         return;
       }
+      // 🔥 Store JWT token + user
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       onLogin(data.user);
     } catch (err) {
       setError('Failed to connect to server');
@@ -43,34 +45,21 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input type="email" placeholder="your@email.com" value={email}
+              onChange={(e) => setEmail(e.target.value)} required />
           </div>
-
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <input type="password" placeholder="••••••••" value={password}
+              onChange={(e) => setPassword(e.target.value)} required />
           </div>
-
           <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
         <p className="auth-switch">
-          Don't have an account?{' '}
-          <span onClick={onSwitchToRegister}>Sign Up</span>
+          Don't have an account? <span onClick={onSwitchToRegister}>Sign Up</span>
         </p>
       </div>
     </div>
