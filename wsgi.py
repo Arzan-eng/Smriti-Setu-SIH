@@ -3,7 +3,9 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from app.routes import main_bp
 from app.auth_routes import auth_bp
+from app.caregiver_routes import caregiver_bp   # 👈 ADDED
 from app.models import db
+from sqlalchemy import text                     # 👈 ADDED
 import os
 from datetime import timedelta
 
@@ -42,9 +44,25 @@ with app.app_context():
     db.create_all()
     print("✅ Database tables created")
 
+    # 👈 ADDED — Safely add new caregiver columns to existing user table
+    try:
+        db.session.execute(text("ALTER TABLE user ADD COLUMN role VARCHAR(20) DEFAULT 'patient'"))
+        db.session.commit()
+        print("✅ Added 'role' column to user table")
+    except Exception:
+        db.session.rollback()   # Column already exists — safe to ignore
+
+    try:
+        db.session.execute(text("ALTER TABLE user ADD COLUMN caregiver_id INTEGER REFERENCES user(id)"))
+        db.session.commit()
+        print("✅ Added 'caregiver_id' column to user table")
+    except Exception:
+        db.session.rollback()   # Column already exists — safe to ignore
+
 # ── Register blueprints ──
 app.register_blueprint(main_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(caregiver_bp)   # 👈 ADDED
 
 # ── Test routes ──
 @app.route('/ping')
