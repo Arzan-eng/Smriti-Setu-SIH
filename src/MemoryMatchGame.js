@@ -83,9 +83,10 @@ const MemoryMatchGame = ({ userId, onGameEnd }) => {
 
     const totalPairs = EMOJIS.length;
     const score = Math.round((matchedPairs.length / totalPairs) * 100);
+    const token = localStorage.getItem('token');
 
     const payload = {
-      user_id: userId,                // ✅ dynamic user ID
+      user_id: userId,
       game_id: 'memory_match',
       difficulty: difficulty,
       score: score,
@@ -95,7 +96,10 @@ const MemoryMatchGame = ({ userId, onGameEnd }) => {
     try {
       const response = await fetch('https://smriti-setu-sih-1.onrender.com/api/save_game', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
