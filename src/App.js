@@ -6,7 +6,7 @@ import MemoryMatchGame from './MemoryMatchGame';
 import KichuKichuGame from './KichuKichuGame';
 import Login from './components/Login';
 import Register from './components/Register';
-import CaregiverDashboard from './components/CaregiverDashboard'; // 👈 ADDED
+import CaregiverDashboard from './components/CaregiverDashboard';
 
 function App() {
   // ── Authentication state ──
@@ -20,6 +20,7 @@ function App() {
   const [activeGame, setActiveGame] = useState(null);
   const [meds, setMeds] = useState([]);
   const [voiceReply, setVoiceReply] = useState('');
+  const [userStats, setUserStats] = useState({ memory: 0, puzzle: 0 });
 
   // ── Check authentication on mount ──
   useEffect(() => {
@@ -42,7 +43,7 @@ function App() {
     checkAuth();
   }, []);
 
-  // ── Fetch medicines (depends on currentUser) ──
+  // ── Fetch medicines ──
   const fetchMedicines = async () => {
     if (!currentUser) return;
     try {
@@ -74,6 +75,7 @@ function App() {
       setMeds(mapped);
     } catch (error) {
       console.error('Error fetching medicines:', error);
+      // Fallback demo data
       setMeds([
         { id: 1, name: 'Donepezil 10mg', dose: '1 tablet', time: 'Morning', displayTime: '8:00 AM', taken: true, streak: '12d' },
         { id: 2, name: 'Vitamin B12 500mcg', dose: '1 capsule', time: 'Morning', displayTime: '8:00 AM', taken: true },
@@ -84,9 +86,40 @@ function App() {
     }
   };
 
+  // ── Fetch dynamic user stats from backend ──
+  const fetchUserStats = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`https://smriti-setu-sih-1.onrender.com/api/progress/${currentUser.id}`);
+      if (!res.ok) {
+        setUserStats({ memory: 0, puzzle: 0 });
+        return;
+      }
+      const data = await res.json();
+      if (!data || data.length === 0) {
+        setUserStats({ memory: 0, puzzle: 0 });
+        return;
+      }
+
+      // Last day's score = Memory
+      const lastEntry = data[data.length - 1];
+      const memoryScore = Math.round(lastEntry.avg_score);
+
+      // Average across all days = Puzzle
+      const avg = data.reduce((sum, d) => sum + d.avg_score, 0) / data.length;
+      const puzzleScore = Math.round(avg);
+
+      setUserStats({ memory: memoryScore, puzzle: puzzleScore });
+    } catch (error) {
+      console.error('Failed to fetch user stats:', error);
+      setUserStats({ memory: 0, puzzle: 0 });
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchMedicines();
+      fetchUserStats();
     }
   }, [currentUser]);
 
@@ -101,6 +134,7 @@ function App() {
         await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/take', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ medication_id: id })
         });
         fetchMedicines();
@@ -183,6 +217,38 @@ function App() {
     }
   };
 
+  // ── 🆕 SOS with GPS ──
+  const handleSOS = () => {
+    if (navigator.geolocation) {
+      alert('📍 Getting your location...');
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+          const confirmMsg = `🚨 EMERGENCY!\n\nSend this location to your caregiver:\n📍 ${mapsLink}\n\n📞 Call caregiver now?`;
+          if (window.confirm(confirmMsg)) {
+            window.open('tel:1234567890'); // Replace with actual caregiver number
+          }
+        },
+        (error) => {
+          console.error('GPS Error:', error);
+          alert('⚠️ Could not get your location. Please call your caregiver immediately.\n\n📞 1800-XXX-XXXX');
+          window.open('tel:1800XXX');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      alert('❌ GPS not supported. Please call your caregiver immediately.\n\n📞 1800-XXX-XXXX');
+      window.open('tel:1800XXX');
+    }
+  };
+
   // ── Auth handlers ──
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -228,32 +294,47 @@ function App() {
                     <span className="card-title">Yesterday's Summary</span>
                     <span className="card-date">{getDateStr(-1)}</span>
                   </div>
-                  <div className="score-row">
-                    <div className="score-item accent-bg">
-                      <div className="score-label">Memory</div>
-                      <div className="score-ring">
-                        <svg viewBox="0 0 36 36">
-                          <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
-                          <circle className="ring-fill accent" cx="18" cy="18" r="15.5"
-                            strokeDasharray="97.4" strokeDashoffset="14.6"></circle>
-                        </svg>
-                        <span className="score-value">85%</span>
-                      </div>
-                      <div className="score-percent">+3% from last week</div>
+
+                  {/* 🔥 DYNAMIC SCORES */}
+                  {userStats.memory === 0 && userStats.puzzle === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px 20px', color: '#8E8A82' }}>
+                      <i className="fas fa-chart-line" style={{ fontSize: '36px', marginBottom: '12px', opacity: 0.4 }}></i>
+                      <p>No game scores yet. Play a game to see your stats!</p>
                     </div>
-                    <div className="score-item coral-bg">
-                      <div className="score-label">Puzzle Skills</div>
-                      <div className="score-ring">
-                        <svg viewBox="0 0 36 36">
-                          <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
-                          <circle className="ring-fill coral" cx="18" cy="18" r="15.5"
-                            strokeDasharray="97.4" strokeDashoffset="21.4"></circle>
-                        </svg>
-                        <span className="score-value">78%</span>
+                  ) : (
+                    <div className="score-row">
+                      <div className="score-item accent-bg">
+                        <div className="score-label">Memory</div>
+                        <div className="score-ring">
+                          <svg viewBox="0 0 36 36">
+                            <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
+                            <circle className="ring-fill accent" cx="18" cy="18" r="15.5"
+                              strokeDasharray="97.4"
+                              strokeDashoffset={97.4 - (97.4 * userStats.memory / 100)}
+                              style={{ transition: 'stroke-dashoffset 1s ease' }}
+                            ></circle>
+                          </svg>
+                          <span className="score-value">{userStats.memory}%</span>
+                        </div>
+                        <div className="score-percent">Latest score</div>
                       </div>
-                      <div className="score-percent">+5% from last week</div>
+                      <div className="score-item coral-bg">
+                        <div className="score-label">Puzzle Skills</div>
+                        <div className="score-ring">
+                          <svg viewBox="0 0 36 36">
+                            <circle className="ring-bg" cx="18" cy="18" r="15.5"></circle>
+                            <circle className="ring-fill coral" cx="18" cy="18" r="15.5"
+                              strokeDasharray="97.4"
+                              strokeDashoffset={97.4 - (97.4 * userStats.puzzle / 100)}
+                              style={{ transition: 'stroke-dashoffset 1s ease' }}
+                            ></circle>
+                          </svg>
+                          <span className="score-value">{userStats.puzzle}%</span>
+                        </div>
+                        <div className="score-percent">7-day average</div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="section-label animate-in delay-2">Quick Actions</div>
@@ -384,9 +465,23 @@ function App() {
                 </div>
               </div>
             ) : activeGame === 'memory' ? (
-              <MemoryMatchGame userId={currentUser.id} onGameEnd={() => { setActiveGame(null); fetchMedicines(); }} />
+              <MemoryMatchGame
+                userId={currentUser.id}
+                onGameEnd={() => {
+                  setActiveGame(null);
+                  fetchMedicines();
+                  fetchUserStats(); // 🔥 Refresh scores after game
+                }}
+              />
             ) : (
-              <KichuKichuGame userId={currentUser.id} onGameEnd={() => { setActiveGame(null); fetchMedicines(); }} />
+              <KichuKichuGame
+                userId={currentUser.id}
+                onGameEnd={() => {
+                  setActiveGame(null);
+                  fetchMedicines();
+                  fetchUserStats(); // 🔥 Refresh scores after game
+                }}
+              />
             )}
           </div>
         );
@@ -458,14 +553,24 @@ function App() {
                   schedule_time: fd.get('time')
                 };
                 try {
-                  await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/add', {
+                  const res = await fetch('https://smriti-setu-sih-1.onrender.com/api/medication/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(payload)
                   });
-                  fetchMedicines();
-                  e.target.reset();
-                } catch (err) { console.error(err); }
+                  if (res.ok) {
+                    alert('✅ Medicine added!');
+                    fetchMedicines();
+                    e.target.reset();
+                  } else {
+                    const err = await res.json();
+                    alert('❌ ' + (err.error || 'Failed to add medicine'));
+                  }
+                } catch (err) {
+                  console.error(err);
+                  alert('❌ Network error');
+                }
               }}>
                 <input name="name" placeholder="Medicine name" required />
                 <input name="dose" placeholder="Dosage (e.g. 1 tablet)" required />
@@ -577,14 +682,68 @@ function App() {
               <div className="emergency-icon"><i className="fas fa-triangle-exclamation"></i></div>
               <div className="em-title">🚨 Emergency?</div>
               <div className="em-desc">Call 911 or your local emergency number immediately</div>
-              <button className="emergency-call-btn" onClick={() => alert('Calling emergency...')}>
+              <button className="emergency-call-btn" onClick={handleSOS}>
                 <i className="fas fa-phone"></i> Call Emergency
+              </button>
+            </div>
+
+            {/* QR Code Share Section */}
+            <div className="qr-share-section animate-in delay-5" style={{
+              marginTop: '24px',
+              padding: '24px',
+              background: '#fff',
+              borderRadius: '16px',
+              border: '1px solid #E8E4DF',
+              textAlign: 'center',
+              boxShadow: '0 2px 16px rgba(26,26,26,0.06)'
+            }}>
+              <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>📱 Share Smriti-Setu</h3>
+              <p style={{ color: '#8E8A82', fontSize: '14px', marginBottom: '16px' }}>
+                Scan to download the app
+              </p>
+
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://smriti-setu-sih.vercel.app/"
+                alt="QR Code to Smriti-Setu"
+                style={{
+                  maxWidth: '200px',
+                  height: 'auto',
+                  margin: '0 auto',
+                  display: 'block',
+                  borderRadius: '12px',
+                  border: '2px solid #E8E4DF'
+                }}
+              />
+
+              <p style={{ marginTop: '12px', fontSize: '13px', color: '#8E8A82', wordBreak: 'break-all' }}>
+                or visit: <br />
+                <strong style={{ color: '#0D9B76' }}>smriti-setu-sih.vercel.app</strong>
+              </p>
+
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('https://smriti-setu-sih.vercel.app/')
+                    .then(() => alert('✅ Link copied to clipboard!'))
+                    .catch(() => alert('❌ Failed to copy. Please copy manually.'));
+                }}
+                style={{
+                  marginTop: '12px',
+                  padding: '10px 24px',
+                  background: '#0D9B76',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                <i className="fas fa-copy"></i> Copy Link
               </button>
             </div>
           </div>
         );
 
-      // 👈 ADDED — Caregiver Dashboard tab
       case 'caregiver':
         return <CaregiverDashboard currentUser={currentUser} />;
 
@@ -635,7 +794,6 @@ function App() {
           <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { setActiveTab('game'); setActiveGame(null); }}>🎮 Game</button>
           <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => setActiveTab('medicine')}>💊 Medicine</button>
           <button className={activeTab === 'support' ? 'active' : ''} onClick={() => setActiveTab('support')}>🆘 Support</button>
-          {/* 👈 ADDED — Caregiver tab */}
           <button className={activeTab === 'caregiver' ? 'active' : ''} onClick={() => setActiveTab('caregiver')}>👨‍⚕️ Caregiver</button>
         </div>
         <div className="nav-right">
