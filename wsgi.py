@@ -4,6 +4,7 @@ from flask_cors import CORS
 from app.routes import main_bp
 from app.auth_routes import auth_bp
 from app.caregiver_routes import caregiver_bp
+from app.hydration_routes import hydration_bp          # 👈 ADDED
 from app.models import db
 from sqlalchemy import text
 import os
@@ -44,6 +45,7 @@ with app.app_context():
 app.register_blueprint(main_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(caregiver_bp)
+app.register_blueprint(hydration_bp)                   # 👈 ADDED
 
 @app.route('/ping')
 def ping():
