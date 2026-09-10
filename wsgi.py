@@ -10,7 +10,7 @@ import os
 
 app = Flask(__name__)
 
-# ── CORS: allow Authorization header for JWT ──
+# ── CORS: JWT-friendly (no cookies needed) ──
 CORS(app,
      resources={r"/*": {"origins": "*"}},
      allow_headers=["Content-Type", "Authorization"],
@@ -31,7 +31,6 @@ with app.app_context():
     db.create_all()
     print("✅ Database tables created")
 
-    # Safely add caregiver columns
     try:
         db.session.execute(text("ALTER TABLE user ADD COLUMN role VARCHAR(20) DEFAULT 'patient'"))
         db.session.commit()
