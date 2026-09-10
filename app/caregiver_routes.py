@@ -1,32 +1,47 @@
 # app/caregiver_routes.py
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from app.models import db, User, Medication, GameSession
 from datetime import datetime, timedelta
+import jwt
+from functools import wraps
 
 caregiver_bp = Blueprint('caregiver', __name__)
 
-# ── Helper: Get current user ──
+SECRET_KEY = 'your-super-secret-jwt-key-change-in-production'
+
+
+# ── JWT helper ──
 def get_current_user():
-    user_id = session.get('user_id')
-    if not user_id:
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
         return None
-    return User.query.get(user_id)
+    token = auth_header.split(' ')[1]
+    try:
+        data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        return User.query.get(data['user_id'])
+    except Exception:
+        return None
 
-# ── GET PATIENTS (for a caregiver) ──
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Unauthorized'}), 401
+        return f(user, *args, **kwargs)
+    return decorated
+
+
+# ── GET PATIENTS ──
 @caregiver_bp.route('/api/caregiver/patients', methods=['GET'])
-def get_patients():
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'caregiver':
-        return jsonify({"error": "Unauthorized"}), 401
-
+@token_required
+def get_patients(current_user):
     patients = User.query.filter_by(caregiver_id=current_user.id).all()
     result = []
     for p in patients:
-        # Count today's medications
         total_meds = Medication.query.filter_by(user_id=p.id).count()
         taken_meds = Medication.query.filter_by(user_id=p.id, is_taken=True).count()
-
-        # Last game session
         last_game = GameSession.query.filter_by(user_id=p.id).order_by(GameSession.played_at.desc()).first()
 
         result.append({
@@ -41,18 +56,15 @@ def get_patients():
         })
     return jsonify(result), 200
 
+
 # ── GET PATIENT DETAILS ──
 @caregiver_bp.route('/api/caregiver/patient/<int:patient_id>', methods=['GET'])
-def get_patient_details(patient_id):
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'caregiver':
-        return jsonify({"error": "Unauthorized"}), 401
-
+@token_required
+def get_patient_details(current_user, patient_id):
     patient = User.query.get(patient_id)
     if not patient or patient.caregiver_id != current_user.id:
         return jsonify({"error": "Patient not found or not linked to you"}), 404
 
-    # Medications
     meds = Medication.query.filter_by(user_id=patient_id).all()
     med_list = [{
         "id": m.id,
@@ -62,7 +74,6 @@ def get_patient_details(patient_id):
         "is_taken": m.is_taken,
     } for m in meds]
 
-    # Game sessions (last 7 days)
     week_ago = datetime.utcnow() - timedelta(days=7)
     sessions = GameSession.query.filter(
         GameSession.user_id == patient_id,
@@ -86,13 +97,11 @@ def get_patient_details(patient_id):
         "games": games,
     }), 200
 
+
 # ── ADD MEDICATION FOR PATIENT ──
 @caregiver_bp.route('/api/caregiver/medication/add', methods=['POST'])
-def caregiver_add_medication():
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'caregiver':
-        return jsonify({"error": "Unauthorized"}), 401
-
+@token_required
+def caregiver_add_medication(current_user):
     data = request.get_json()
     patient_id = data.get('patient_id')
 
@@ -119,13 +128,11 @@ def caregiver_add_medication():
         "medication_id": new_med.id
     }), 201
 
+
 # ── DELETE MEDICATION ──
 @caregiver_bp.route('/api/caregiver/medication/<int:med_id>', methods=['DELETE'])
-def caregiver_delete_medication(med_id):
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'caregiver':
-        return jsonify({"error": "Unauthorized"}), 401
-
+@token_required
+def caregiver_delete_medication(current_user, med_id):
     med = Medication.query.get(med_id)
     if not med:
         return jsonify({"error": "Medication not found"}), 404
@@ -139,13 +146,11 @@ def caregiver_delete_medication(med_id):
 
     return jsonify({"status": "success", "message": "Medication deleted"}), 200
 
+
 # ── LINK PATIENT TO CAREGIVER ──
 @caregiver_bp.route('/api/caregiver/link', methods=['POST'])
-def link_patient():
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "Unauthorized"}), 401
-
+@token_required
+def link_patient(current_user):
     data = request.get_json()
     patient_email = data.get('patient_email')
 
@@ -155,6 +160,9 @@ def link_patient():
     patient = User.query.filter_by(email=patient_email).first()
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
+
+    if patient.id == current_user.id:
+        return jsonify({"error": "You cannot link yourself"}), 400
 
     patient.caregiver_id = current_user.id
     if current_user.role != 'caregiver':
@@ -166,13 +174,11 @@ def link_patient():
         "message": f"Linked to {patient.name} successfully!"
     }), 200
 
-# ── GET CAREGIVER DASHBOARD SUMMARY ──
-@caregiver_bp.route('/api/caregiver/summary', methods=['GET'])
-def caregiver_summary():
-    current_user = get_current_user()
-    if not current_user or current_user.role != 'caregiver':
-        return jsonify({"error": "Unauthorized"}), 401
 
+# ── GET CAREGIVER SUMMARY ──
+@caregiver_bp.route('/api/caregiver/summary', methods=['GET'])
+@token_required
+def caregiver_summary(current_user):
     patients = User.query.filter_by(caregiver_id=current_user.id).all()
     total_patients = len(patients)
     total_meds = 0
