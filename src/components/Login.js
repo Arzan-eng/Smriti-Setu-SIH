@@ -24,11 +24,11 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
         setLoading(false);
         return;
       }
-      // 🔥 Store JWT token + user
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       onLogin(data.user);
     } catch (err) {
+      console.error('Login error:', err);
       setError('Failed to connect to server');
       setLoading(false);
     }
