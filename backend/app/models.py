@@ -76,3 +76,26 @@ class Hydration(db.Model):
 
     def __repr__(self):
         return f"<Hydration {self.amount_ml}ml for user {self.user_id}>"
+        # ============================================================
+# BLOOD DONOR MODEL
+# ============================================================
+
+class BloodDonor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(db.String(100), nullable=False)
+
+    blood_group = db.Column(db.String(5), nullable=False)
+
+    city = db.Column(db.String(100), nullable=False)
+
+    area = db.Column(db.String(100), nullable=True)
+
+    phone = db.Column(db.String(20), nullable=True)
+
+    available = db.Column(db.Boolean, default=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<BloodDonor {self.name} - {self.blood_group}>"
