@@ -768,4 +768,196 @@ function App() {
             <div className="section-label animate-in delay-2">Contact & Resources</div>
             <div className="support-grid">
               <div className="support-option animate-in delay-2" onClick={() => alert('Calling helpline...')}>
-                <div className="support-opt-icon
+                <div className="support-opt-icon" style={{ background: '#E6F5F0', color: '#0D9B76' }}><i className="fas fa-phone"></i></div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">📞 Helpline</div>
+                  <div className="support-opt-desc">1800-XXX-XXXX — 24/7</div>
+                </div>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
+              </div>
+              <div className="support-option animate-in delay-2" onClick={() => alert('Opening live chat...')}>
+                <div className="support-opt-icon" style={{ background: '#FFF0EB', color: '#E8734A' }}><i className="fas fa-comments"></i></div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">💬 Live Chat</div>
+                  <div className="support-opt-desc">Chat with a care specialist</div>
+                </div>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
+              </div>
+              <div className="support-option animate-in delay-3" onClick={() => alert('Opening FAQ...')}>
+                <div className="support-opt-icon" style={{ background: '#FFF7E6', color: '#D4A017' }}><i className="fas fa-circle-question"></i></div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">❓ FAQ & Guides</div>
+                  <div className="support-opt-desc">Common questions answered</div>
+                </div>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
+              </div>
+              <div className="support-option animate-in delay-3" onClick={() => alert('Scheduling callback...')}>
+                <div className="support-opt-icon" style={{ background: '#F3EEFF', color: '#7C3AED' }}><i className="fas fa-calendar-check"></i></div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">📅 Schedule Callback</div>
+                  <div className="support-opt-desc">Request a call</div>
+                </div>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
+              </div>
+              <div className="support-option animate-in delay-4" onClick={() => alert('Opening community...')}>
+                <div className="support-opt-icon" style={{ background: '#E6F0FF', color: '#2563EB' }}><i className="fas fa-users"></i></div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">👥 Community Forum</div>
+                  <div className="support-opt-desc">Connect with others</div>
+                </div>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
+              </div>
+              <div className="support-option animate-in delay-4" onClick={() => alert('Opening resources...')}>
+                <div className="support-opt-icon" style={{ background: '#E6F5F0', color: '#0D9B76' }}><i className="fas fa-book-medical"></i></div>
+                <div className="support-opt-info">
+                  <div className="support-opt-name">📚 Educational Resources</div>
+                  <div className="support-opt-desc">Articles and videos</div>
+                </div>
+                <span className="support-opt-arrow"><i className="fas fa-chevron-right"></i></span>
+              </div>
+            </div>
+
+            <div className="emergency-box animate-in delay-5" id="emergency-box">
+              <div className="emergency-icon"><i className="fas fa-triangle-exclamation"></i></div>
+              <div className="em-title">🚨 Emergency?</div>
+              <div className="em-desc">Call 911 or your local emergency number immediately</div>
+              <button className="emergency-call-btn" onClick={handleSOS}>
+                <i className="fas fa-phone"></i> Call Emergency
+              </button>
+            </div>
+
+            <div className="qr-share-section animate-in delay-5" style={{
+              marginTop: '24px', padding: '24px', background: '#fff',
+              borderRadius: '16px', border: '1px solid #E8E4DF',
+              textAlign: 'center', boxShadow: '0 2px 16px rgba(26,26,26,0.06)'
+            }}>
+              <h3 style={{ marginBottom: '8px', fontSize: '18px' }}>📱 Share Smriti-Setu</h3>
+              <p style={{ color: '#8E8A82', fontSize: '14px', marginBottom: '16px' }}>Scan to download the app</p>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://smriti-setu-sih.vercel.app/"
+                alt="QR Code" style={{ maxWidth: '200px', margin: '0 auto', display: 'block',
+                borderRadius: '12px', border: '2px solid #E8E4DF' }} />
+              <p style={{ marginTop: '12px', fontSize: '13px', color: '#8E8A82' }}>
+                or visit: <br /><strong style={{ color: '#0D9B76' }}>smriti-setu-sih.vercel.app</strong>
+              </p>
+              <button onClick={() => {
+                navigator.clipboard.writeText('https://smriti-setu-sih.vercel.app/')
+                  .then(() => alert('✅ Link copied!'));
+              }} style={{
+                marginTop: '12px', padding: '10px 24px', background: '#0D9B76',
+                color: '#fff', border: 'none', borderRadius: '10px',
+                fontSize: '14px', fontWeight: '600', cursor: 'pointer'
+              }}>
+                <i className="fas fa-copy"></i> Copy Link
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'caregiver':
+        return <CaregiverDashboard currentUser={currentUser} />;
+
+      default: return <div>Unknown tab</div>;
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="auth-loading">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-wrapper">
+        {showLogin ? (
+          <Login onLogin={handleLogin} onSwitchToRegister={() => setShowLogin(false)} />
+        ) : (
+          <Register onRegister={handleRegister} onSwitchToLogin={() => setShowLogin(true)} />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="App">
+      <div className="bg-atmosphere">
+        <div className="bg-blob"></div>
+        <div className="bg-blob"></div>
+        <div className="bg-blob"></div>
+      </div>
+
+      <nav className="nav-bar">
+        <div className="nav-logo">
+          {/* 🔥 Back arrow button – only shown when not on home */}
+          {activeTab !== 'home' && (
+            <button
+              className="back-btn-nav"
+              onClick={goBack}
+              title="Go back"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '18px',
+                padding: '6px 10px',
+                marginRight: '8px',
+                borderRadius: '8px',
+                color: '#0D9B76',
+                transition: '0.2s'
+              }}
+            >
+              <i className="fas fa-arrow-left"></i>
+            </button>
+          )}
+          
+          {/* 🔥 CHANGED: Load logo from the public folder using direct path */}
+          <img 
+            src="/new-logo.png" 
+            alt="Smriti-Setu Logo" 
+            onClick={() => navigateToTab('home')}
+            style={{ 
+              width: '36px', 
+              height: '36px', 
+              cursor: 'pointer',
+              borderRadius: '8px',
+              marginRight: '8px'
+            }} 
+          />
+          
+          <span
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigateToTab('home')}
+          >
+            Smriti-Setu
+          </span>
+        </div>
+        <div className="nav-tabs">
+          <button className={activeTab === 'home' ? 'active' : ''} onClick={() => { navigateToTab('home'); setActiveGame(null); }}>🏠 Home</button>
+          <button className={activeTab === 'exercise' ? 'active' : ''} onClick={() => navigateToTab('exercise')}>🧠 Exercise</button>
+          <button className={activeTab === 'game' ? 'active' : ''} onClick={() => { navigateToTab('game'); setActiveGame(null); }}>🎮 Game</button>
+          <button className={activeTab === 'medicine' ? 'active' : ''} onClick={() => navigateToTab('medicine')}>💊 Medicine</button>
+          <button className={activeTab === 'hydration' ? 'active' : ''} onClick={() => navigateToTab('hydration')}>💧 Hydration</button>
+          <button className={activeTab === 'support' ? 'active' : ''} onClick={() => navigateToTab('support')}>🆘 Support</button>
+          <button className={activeTab === 'caregiver' ? 'active' : ''} onClick={() => navigateToTab('caregiver')}>👨‍⚕️ Caregiver</button>
+        </div>
+        <div className="nav-right">
+          <span className="user-name">{currentUser?.name || 'User'}</span>
+          <button className="icon-btn" onClick={() => alert(`Profile: ${currentUser?.name}`)}>
+            <i className="fas fa-user"></i>
+          </button>
+          <button className="icon-btn" onClick={handleLogout} style={{ color: '#DC2626' }}>
+            <i className="fas fa-sign-out-alt"></i>
+          </button>
+          <VoiceAssistant userId={currentUser?.id} onAction={executeAction} onReply={setVoiceReply} />
+        </div>
+      </nav>
+
+      <div className="main-content">{renderContent()}</div>
+    </div>
+  );
+}
+
+export default App;
