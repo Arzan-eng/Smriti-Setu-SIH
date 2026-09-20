@@ -7,6 +7,9 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // 🔥 Step 1: Add state to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -48,11 +51,41 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
             <input type="email" placeholder="your@email.com" value={email}
               onChange={(e) => setEmail(e.target.value)} required />
           </div>
+          
           <div className="form-group">
             <label>Password</label>
-            <input type="password" placeholder="••••••••" value={password}
-              onChange={(e) => setPassword(e.target.value)} required />
+            
+            {/* 🔥 Step 2 & 3: Updated Password Input with Eye Button */}
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="••••••••" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                style={{ width: '100%', paddingRight: '40px' }} // Make room for the eye icon
+              />
+              
+              {/* The Eye Button */}
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  cursor: 'pointer',
+                  color: '#8E8A82',
+                  zIndex: 10
+                }}
+              >
+                {/* Switches between eye and eye-slash icons */}
+                <i className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
+              </span>
+            </div>
+            
           </div>
+          
           <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
