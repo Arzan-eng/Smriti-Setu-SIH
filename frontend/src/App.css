@@ -517,6 +517,585 @@ body {
 .list-card-name { font-size:14px; font-weight:700; }
 .list-card-desc { font-size:12px; color:#8E8A82; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .list-card-arrow { color:#8E8A82; font-size:13px; flex-shrink:0; }
-/* Medicine tab enhancements */
+
+/* ── Medicine tab enhancements ── */
 .hero-banner .hero-progress-fill {
-  background: #
+  background: #3fd7b6;
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.8s ease;
+}
+.hero-banner .hero-progress-bar {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #E8E4DF;
+}
+.med-card-full {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 16px rgba(26,26,26,0.06);
+  border: 1px solid #E8E4DF;
+  margin-bottom: 12px;
+}
+.med-card-full .time-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #E8E4DF;
+}
+.time-header i { font-size: 15px; }
+.time-header span { font-size: 14px; font-weight: 700; }
+.time-header .time-status {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+}
+.time-header .time-status.done { color: #0D9B76; }
+.time-header .time-status.pending { color: #E8734A; }
+
+.pill-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F7F5F2;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.pill-item:last-child { border-bottom: none; }
+.pill-item:hover { padding-left: 4px; }
+.pill-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid #E8E4DF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: transparent;
+  transition: 0.3s;
+  flex-shrink: 0;
+}
+.pill-item.taken .pill-check {
+  background: #0D9B76;
+  border-color: #0D9B76;
+  color: #fff;
+}
+.pill-item.taken .pill-name {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.pill-name { font-size: 14px; font-weight: 600; flex: 1; }
+.pill-dosage { font-size: 12px; color: #8E8A82; }
+.pill-time {
+  font-size: 12px;
+  color: #8E8A82;
+  background: #F7F5F2;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* ── Support tab enhancements ── */
+.support-tab-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.support-option {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 16px rgba(26,26,26,0.06);
+  border: 1px solid #E8E4DF;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.support-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  transition: 0.3s;
+}
+.support-option:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(26,26,26,0.10);
+}
+.support-option:hover::before {
+  background: #0D9B76;
+}
+.support-option:active {
+  transform: scale(0.97);
+}
+.support-opt-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: 0.3s;
+}
+.support-option:hover .support-opt-icon {
+  transform: scale(1.05);
+}
+.support-opt-info {
+  flex: 1;
+  min-width: 0;
+}
+.support-opt-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.support-opt-desc {
+  font-size: 13px;
+  color: #8E8A82;
+  margin-top: 2px;
+}
+.support-opt-arrow {
+  color: #8E8A82;
+  font-size: 14px;
+  transition: 0.3s;
+  flex-shrink: 0;
+}
+.support-option:hover .support-opt-arrow {
+  color: #0D9B76;
+  transform: translateX(4px);
+}
+
+/* ── Emergency Box ── */
+.emergency-box {
+  margin-top: 20px;
+  padding: 32px 28px;
+  background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+  border-radius: 16px;
+  border: 2px solid #FCA5A5;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.emergency-box::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: rgba(220, 38, 38, 0.05);
+  border-radius: 50%;
+  top: -80px;
+  right: -60px;
+}
+.emergency-box::after {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: rgba(220, 38, 38, 0.04);
+  border-radius: 50%;
+  bottom: -60px;
+  left: -50px;
+}
+.emergency-icon {
+  font-size: 42px;
+  color: #DC2626;
+  margin-bottom: 12px;
+  position: relative;
+}
+.emergency-box .em-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #DC2626;
+  position: relative;
+}
+.emergency-box .em-desc {
+  font-size: 15px;
+  color: #6B7280;
+  margin-top: 6px;
+  position: relative;
+}
+.emergency-call-btn {
+  margin-top: 18px;
+  padding: 14px 40px;
+  background: #DC2626;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+}
+.emergency-call-btn:hover {
+  background: #B91C1C;
+  transform: scale(1.03);
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.45);
+}
+.emergency-call-btn:active {
+  transform: scale(0.95);
+}
+@media (max-width: 640px) {
+  .support-grid { grid-template-columns: 1fr; }
+  .emergency-box { padding: 24px 18px; }
+  .emergency-box .em-title { font-size: 18px; }
+  .emergency-call-btn {
+    padding: 12px 28px;
+    font-size: 15px;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Hero banner stats for Support */
+.hero-banner.amber {
+  background: linear-gradient(135deg, #D4A017, #B8860B);
+}
+.hero-banner .hero-stats {
+  display: flex;
+  gap: 32px;
+  margin-top: 16px;
+  position: relative;
+}
+.hero-banner .hero-stat-item {
+  text-align: center;
+}
+.hero-banner .hero-stat-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+}
+.hero-banner .hero-stat-lbl {
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* ── Auth Pages ── */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F7F5F2;
+  padding: 20px;
+}
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+}
+.auth-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid #E8E4DF;
+}
+.auth-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1A1A1A;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.auth-subtitle {
+  text-align: center;
+  color: #8E8A82;
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+.auth-error {
+  background: #FEF2F2;
+  color: #DC2626;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  border: 1px solid #FCA5A5;
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 4px;
+}
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #E8E4DF;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: 0.2s;
+  background: #F7F5F2;
+}
+.form-group input:focus {
+  outline: none;
+  border-color: #0D9B76;
+  box-shadow: 0 0 0 3px rgba(13, 155, 118, 0.15);
+}
+.auth-btn {
+  width: 100%;
+  padding: 14px;
+  background: #0D9B76;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 4px;
+}
+.auth-btn:hover {
+  background: #0a8566;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(13, 155, 118, 0.3);
+}
+.auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.auth-switch {
+  text-align: center;
+  font-size: 14px;
+  color: #8E8A82;
+  margin-top: 20px;
+}
+.auth-switch span {
+  color: #0D9B76;
+  font-weight: 600;
+  cursor: pointer;
+}
+.auth-switch span:hover {
+  text-decoration: underline;
+}
+
+/* ── Loading state ── */
+.auth-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #F7F5F2;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #E8E4DF;
+  border-top-color: #0D9B76;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.auth-loading p {
+  color: #8E8A82;
+  margin-top: 12px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   💧 HYDRATION TAB (NEW)
+   ════════════════════════════════════════════════════════════ */
+.hydration-hero {
+  background: linear-gradient(135deg, #3B82F6, #1E40AF);
+  border-radius: 20px;
+  padding: 36px 24px;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+.hydration-hero::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+  top: -80px;
+  right: -60px;
+}
+.hydration-hero::after {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  bottom: -60px;
+  left: -40px;
+}
+.hydration-ring {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 16px;
+  position: relative;
+}
+.hydration-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.hydration-ring .ring-bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.2);
+  stroke-width: 4;
+}
+.hydration-ring .ring-fill.hydration {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.hydration-ring-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+}
+.hydration-big {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+.hydration-small {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.hydration-text {
+  font-size: 16px;
+  font-weight: 600;
+  position: relative;
+  margin-bottom: 4px;
+}
+.hydration-subtext {
+  font-size: 14px;
+  opacity: 0.9;
+  position: relative;
+}
+.hydration-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.hydration-btn {
+  background: #fff;
+  border: 2px solid #E8E4DF;
+  border-radius: 16px;
+  padding: 20px 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.hydration-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  border-color: #3B82F6;
+}
+.hydration-btn:active {
+  transform: scale(0.96);
+}
+.hydration-btn i {
+  font-size: 24px;
+  color: #3B82F6;
+  margin-bottom: 4px;
+}
+.hydration-btn.small i { font-size: 20px; }
+.hydration-btn.large i { font-size: 28px; }
+.hydration-btn .btn-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.hydration-btn .btn-ml {
+  font-size: 11px;
+  color: #8E8A82;
+  font-weight: 500;
+}
+.hydration-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #E8E4DF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.hydration-entry-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #E0EDFF;
+  color: #3B82F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .hydration-ring {
+    width: 130px;
+    height: 130px;
+  }
+  .hydration-big {
+    font-size: 32px;
+  }
+  .hydration-btn {
+    padding: 16px 8px;
+  }
+  .hydration-btn i {
+    font-size: 20px;
+  }
+}
