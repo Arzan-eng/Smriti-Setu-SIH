@@ -8,6 +8,9 @@ import Login from './components/Login';
 import Register from './components/Register';
 import CaregiverDashboard from './components/CaregiverDashboard';
 
+// 🔥 NEW: Import the logo image so React can use it
+import newLogo from './new-logo.png';
+
 const API_BASE = 'https://smriti-setu-sih-1.onrender.com';
 
 // 🔥 Helper: Auth headers
@@ -912,13 +915,21 @@ function App() {
               <i className="fas fa-arrow-left"></i>
             </button>
           )}
-          <span
-            className="logo-icon"
+          
+          {/* 🔥 CHANGED: Replaced the old house icon with the new image logo */}
+          <img 
+            src={newLogo} 
+            alt="Smriti-Setu Logo" 
             onClick={() => navigateToTab('home')}
-            style={{ cursor: 'pointer' }}
-          >
-            <i className="fas fa-house"></i>
-          </span>
+            style={{ 
+              width: '36px', 
+              height: '36px', 
+              cursor: 'pointer',
+              borderRadius: '8px', /* Rounds the corners slightly */
+              marginRight: '8px'
+            }} 
+          />
+          
           <span
             style={{ cursor: 'pointer' }}
             onClick={() => navigateToTab('home')}
