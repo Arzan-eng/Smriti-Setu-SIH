@@ -8,9 +8,6 @@ import Login from './components/Login';
 import Register from './components/Register';
 import CaregiverDashboard from './components/CaregiverDashboard';
 
-// 🔥 REMOVED: The import line that was breaking the build
-// import newLogo from './new-logo.png'; 
-
 const API_BASE = 'https://smriti-setu-sih-1.onrender.com';
 
 // 🔥 Helper: Auth headers
@@ -770,4 +767,5 @@ function App() {
             </div>
             <div className="section-label animate-in delay-2">Contact & Resources</div>
             <div className="support-grid">
-             
+              <div className="support-option animate-in delay-2" onClick={() => alert('Calling helpline...')}>
+                <div className="support-opt-icon
