@@ -7,7 +7,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 🔥 Step 1: Add state to toggle password visibility
+  // 🔥 State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -55,7 +55,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
           <div className="form-group">
             <label>Password</label>
             
-            {/* 🔥 Step 2 & 3: Updated Password Input with Eye Button */}
+            {/* Wrapper for relative positioning */}
             <div style={{ position: 'relative', width: '100%' }}>
               <input 
                 type={showPassword ? 'text' : 'password'} 
@@ -63,25 +63,31 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
-                style={{ width: '100%', paddingRight: '40px' }} // Make room for the eye icon
+                style={{ width: '100%', paddingRight: '50px' }} // Make room for the button
               />
               
-              {/* The Eye Button */}
-              <span
+              {/* The Eye Button - Styled to be clearly visible */}
+              <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '8px',
                   top: '50%',
                   transform: 'translateY(-50%)',
+                  background: '#FFFFFF', 
+                  border: '1px solid #E8E4DF', 
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  color: '#8E8A82',
+                  padding: '4px 8px',
+                  color: '#0D9B76', 
+                  fontSize: '12px',
+                  fontWeight: 'bold',
                   zIndex: 10
                 }}
               >
-                {/* Switches between eye and eye-slash icons */}
-                <i className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
-              </span>
+                {showPassword ? "HIDE" : "SHOW"}
+              </button>
             </div>
             
           </div>
